@@ -1,1 +1,21 @@
 This is a collection of utilities that I have written for automating some of my tasks involving audio and image files. There is also a simple backup utitily. I have not written any documentation or man pages, but some of the utilitiles display a usage instruction if invoked with --help. In the unlikely event that somebody would want to redistribute any of the files, please keep in mind that the license is GPL version 2.
+
+Brief overview of the utilities
+-------------------------
+batch-convert-imgs.rb: converts and resizes image files between different formats. It is a front-end to the GraphicsMagick tools . It has powerful batch options that allow you to recursively process a whole directory tree.
+
+qt/BatchConvertImages: a qt-based GUI for batch-convert-imgs.rb.
+
+copy-exif.rb: copies exif data from source to derived image. Can find the source deep down in a directory as long as there is a name resemblance between source and derived image.
+
+batch-oggencode.rb: converts FLAC files to OGG (or optionally MP3). Can process a whole directory tree.
+
+batch-tag-flac.rb: tags FLAC files automatically based on the files' names and directory names. Probably not very useful for anyone except me.
+
+adjust-wav-freq.rb: rewrites the recording frequency of a WAVE file without altering the file in any other way.
+adjust-flac-freq.rb: rewrites the recording frequency of a FLAC file without altering the file in any other way.
+batch-adjust-flac-freq.rb: applies the above utility to a batch of files.
+
+relocate.rb: processes a directory tree and converts between relative and absolute symbolic links, and vice versa.
+
+rsbackup.rb: my backup program based on rsync. The interface language is Swedish (sorry!).
