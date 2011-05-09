@@ -413,9 +413,9 @@ void MainWindow::on_bnOK_pressed()
     }
 
     unsigned int lastTime_t = QDateTime::currentDateTime().toTime_t();
-
-    ProcessOutputDlg outputDlg(s_theProgram, args, this);
-    int dc = outputDlg.exec();
+    ProcessOutputDlg outputDlg(this);
+    outputDlg.setVerbose(ui->chkVerbose->checkState() == Qt::Checked);
+    int dc = outputDlg.exec(s_theProgram, args);
     if (dc == QDialog::Accepted && !bDryRun)
     {
         s_lastTime_t = lastTime_t;
@@ -526,22 +526,43 @@ namespace
 {
     void clearDirectory(QString const & path)
     {
-        if (!path.isEmpty())
+        if (path.length() == 0)
+        {
+            return;
+        }
+        QDir dir(path);
+        if (!QDir(path).exists())
         {
             QMessageBox msgBox;
-            msgBox.setText("Delete files");
-            msgBox.setInformativeText(path);
-            msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-            msgBox.setDefaultButton(QMessageBox::Cancel);
-            int ret = msgBox.exec();
-            if (ret ==QMessageBox::Ok)
-            {
-                QProcess process;
-                QStringList args;
-                args.push_back("-rf");
-                args.push_back(path);
-                process.execute("rm", args);
-            }
+            msgBox.setText(path);
+            msgBox.setInformativeText("Directory does not exist");
+            msgBox.exec();
+            return;
+        }
+        QStringList entries = dir.entryList(QStringList(), QDir::AllEntries | QDir::NoDotAndDotDot);
+        if (entries.length() == 0)
+        {
+            return;
+        }
+
+        QMessageBox msgBox;
+        msgBox.setText(dir.canonicalPath());
+        msgBox.setInformativeText("Clear directory completely and recursively?");
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
+        if (ret ==QMessageBox::Ok)
+        {
+            QStringList args;
+            args << "-rf" << "--one-file-system";
+            QProcess process;
+            process.setWorkingDirectory(dir.canonicalPath());
+            process.start("rm", args + entries);
+            process.waitForFinished();
+            /*
+            ProcessOutputDlg outputDlg;
+            outputDlg.setWorkingDirectory(path);
+            outputDlg.exec("rm", args + entries);*/
         }
     }
 } // namespace

@@ -11,13 +11,19 @@ namespace Ui {
 class ProcessOutputDlg : public QDialog {
     Q_OBJECT
 public:
-    ProcessOutputDlg(QString const & program, QStringList const & args, QWidget *parent = 0);
+    ProcessOutputDlg(QWidget *parent = 0);
     ~ProcessOutputDlg();
+    int exec(const QString &program, const QStringList &args);
+    void setWorkingDirectory(QString path);
+    void setVerbose(bool verbose);
+
 
 protected:
     void changeEvent(QEvent *e);
 
 private:
+    QString m_cwd;
+    bool m_verbose;
     Ui::ProcessOutputDlg *ui;
     QProcess m_process;
     int m_noCloseCounter; // prevent close if non-zero

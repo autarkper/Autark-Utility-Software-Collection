@@ -3,21 +3,46 @@
 
 #include <QTextStream>
 
-ProcessOutputDlg::ProcessOutputDlg(const QString &program, const QStringList &args, QWidget *parent) :
+ProcessOutputDlg::ProcessOutputDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ProcessOutputDlg),
     m_noCloseCounter(2), // require a number of cancels before closing dialog on running process
-    m_aborting(false),
-    m_exitCode(-1)
+    m_aborting(false)
 {
     ui->setupUi(this);
+}
+
+void ProcessOutputDlg::setWorkingDirectory(QString path)
+{
+    m_cwd = path;
+}
+
+void ProcessOutputDlg::setVerbose(bool verbose)
+{
+    m_verbose = verbose;
+}
+
+int ProcessOutputDlg::exec(const QString &program, const QStringList &args)
+{
     connect(&m_process, SIGNAL(readyRead()), this, SLOT(readData()));
     connect(&m_process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(on_process_finished(int,QProcess::ExitStatus)));
     connect(&m_process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(on_process_error(QProcess::ProcessError)));
 
+    if (m_cwd.length() > 0)
+    {
+        m_process.setWorkingDirectory(m_cwd);
+    }
     m_process.setProcessChannelMode(QProcess::MergedChannels);
+    if (m_verbose)
+    {
+        QStringList cmdline;
+        cmdline << program;
+        cmdline += args;
+        ui->m_textBrowser->append(cmdline.join(" "));
+    }
     m_process.start(program, args);
     m_process.closeWriteChannel();
+    return QDialog::exec();
 }
 
 void ProcessOutputDlg::readData()
