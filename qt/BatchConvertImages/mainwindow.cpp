@@ -273,6 +273,13 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
         args << extension;
     }
 
+    QString imageType = ui->cbImageType->currentText();
+    if (!imageType.isEmpty())
+    {
+        args << "--image-type";
+        args << imageType;
+    }
+
     if (ui->chkOverWrite->checkState() == Qt::Checked)
     {
         args << "--overwrite";
