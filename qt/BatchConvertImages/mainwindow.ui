@@ -327,36 +327,6 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_9">
            <item>
-            <widget class="QCheckBox" name="chkOverWrite">
-             <property name="toolTip">
-              <string>Overwrite existing files</string>
-             </property>
-             <property name="text">
-              <string>Over&amp;write</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="chkUpdate">
-             <property name="toolTip">
-              <string>Only update existing files (target must exist)</string>
-             </property>
-             <property name="text">
-              <string>Update</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="chkIncremental">
-             <property name="toolTip">
-              <string>Only process newer files since last run</string>
-             </property>
-             <property name="text">
-              <string>Incremental</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QCheckBox" name="chkCopyExif">
              <property name="toolTip">
               <string>Copy EXIF (metadata) from source to target</string>
@@ -631,6 +601,9 @@
                  </property>
                  <property name="inputMethodHints">
                   <set>Qt::ImhDigitsOnly</set>
+                 </property>
+                 <property name="text">
+                  <string>1</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -995,6 +968,36 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="chkOverWrite">
+          <property name="toolTip">
+           <string>Overwrite existing files</string>
+          </property>
+          <property name="text">
+           <string>Over&amp;write</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="chkUpdate">
+          <property name="toolTip">
+           <string>Only update existing files (target must exist)</string>
+          </property>
+          <property name="text">
+           <string>Update</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="chkIncremental">
+          <property name="toolTip">
+           <string>Only process newer files since last run</string>
+          </property>
+          <property name="text">
+           <string>Incremental</string>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QCheckBox" name="chkVerbose">
