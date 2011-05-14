@@ -26,8 +26,10 @@ private:
     QString m_find_pattern;
     QString m_userPpi;
     bool m_changingPreset;
+    void on_bnOK_pressed__(bool isDryRun);
 
 private slots:
+    void on_bnDryRun_pressed();
     void on_lePPI_textChanged(QString );
     void on_lnInputDir_textChanged(QString );
     void on_leWidth_textEdited(QString );

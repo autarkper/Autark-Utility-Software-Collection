@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->leUsmAmount->setValidator(new QIntValidator(ui->leUsmAmount));
     ui->leUsmThreshold->setValidator(new QIntValidator(ui->leUsmThreshold));
     ui->leQuality->setValidator(new QIntValidator(0, 100, ui->leQuality));
-    ui->leFrameDim->setValidator(new QIntValidator(ui->leFrameDim));
+    ui->leFrameDim->setValidator(new QIntValidator(0, 1000, ui->leFrameDim));
 }
 
 MainWindow::~MainWindow()
@@ -213,6 +213,11 @@ void MainWindow::on_lnInputDir_textChanged(QString )
 
 void MainWindow::on_bnOK_pressed()
 {
+    on_bnOK_pressed__(false);
+}
+
+void MainWindow::on_bnOK_pressed__(bool isDryRun)
+{
     bool bDryRun = false;
 
     ui->bnOK->setFocus(); // force focus change - Qt does not do it when button is activated from hot key
@@ -228,7 +233,7 @@ void MainWindow::on_bnOK_pressed()
         return;
     }
 
-    if (ui->chkDryRun->checkState() == Qt::Checked)
+    if (isDryRun)
     {
         bDryRun = true;
         args << "--dry-run";
@@ -595,4 +600,9 @@ void MainWindow::on_leHeight_textChanged(QString )
 void MainWindow::on_leWidth_textEdited(QString )
 {
     resetPreset(m_changingPreset, *ui->cbDimPresets);
+}
+
+void MainWindow::on_bnDryRun_pressed()
+{
+    on_bnOK_pressed__(true);
 }
