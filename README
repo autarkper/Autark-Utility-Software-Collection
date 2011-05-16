@@ -1,8 +1,10 @@
 This is a collection of utilities that I have written for automating some of my tasks involving audio and image files. There is also a simple backup utitily. I have not written any documentation or man pages, but some of the utilitiles display a usage instruction if invoked with --help. In the unlikely event that somebody would want to redistribute any of the files, please keep in mind that the license is GPL version 2.
 
+These utilities have been developed and tested exclusively on Linux. In theory, they could be usable on any UNIX-like system, provided that all required packages are installed.
+
 Brief overview of the utilities
 -------------------------
-batch-convert-imgs.rb: converts and resizes image files between different formats. It is a front-end to the GraphicsMagick tools . It has powerful batch options that allow you to recursively process a whole directory tree.
+batch-convert-imgs.rb: converts and resizes image files between different formats. It is a front-end to the GraphicsMagick tools. It has powerful batch options that allow you to recursively process a whole directory tree.
 
 qt/BatchConvertImages: a qt-based GUI for batch-convert-imgs.rb.
 
