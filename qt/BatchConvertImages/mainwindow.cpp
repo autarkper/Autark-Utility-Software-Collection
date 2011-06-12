@@ -567,14 +567,14 @@ namespace
         {
             QStringList args;
             args << "-rf" << "--one-file-system";
+            /*
             QProcess process;
             process.setWorkingDirectory(dir.canonicalPath());
             process.start("rm", args + entries);
-            process.waitForFinished();
-            /*
+            process.waitForFinished(); */
             ProcessOutputDlg outputDlg;
             outputDlg.setWorkingDirectory(path);
-            outputDlg.exec("rm", args + entries);*/
+            outputDlg.exec("rm", args + entries);
         }
     }
 } // namespace
