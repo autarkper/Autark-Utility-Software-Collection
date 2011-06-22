@@ -566,7 +566,7 @@ namespace
         if (ret ==QMessageBox::Ok)
         {
             QStringList args;
-            args << "-rf" << "--one-file-system";
+            args << "-vrf" << "--one-file-system";
             /*
             QProcess process;
             process.setWorkingDirectory(dir.canonicalPath());
@@ -574,6 +574,7 @@ namespace
             process.waitForFinished(); */
             ProcessOutputDlg outputDlg;
             outputDlg.setWorkingDirectory(path);
+            outputDlg.setVerbose(true);
             outputDlg.exec("rm", args + entries);
         }
     }
