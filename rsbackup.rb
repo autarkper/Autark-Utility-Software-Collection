@@ -184,6 +184,7 @@ ARGV.each {
             "-av",
             "--backup",
             "--delete",
+            "--delete-excluded",
             "--force",
             "--backup-dir=" + @@backup_dir,
     ].compact + excludes.collect {
