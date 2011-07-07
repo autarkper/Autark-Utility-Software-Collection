@@ -171,7 +171,8 @@ void MainWindow::on_bnInputBrowse_clicked()
 
         m_usingBrowseInput = true;
         m_fileNames = fileNames;
-        ui->chkTopLevelOnly->setEnabled(!m_usingBrowseInput);
+        ui->chkTopLevelOnly->setEnabled(false);
+        ui->nClearInput->setEnabled(false);
         m_find_dir = m_find_pattern = QString();
 
         s_last_inputfiles_str = ui->lnInputDir->text();
@@ -209,6 +210,7 @@ void MainWindow::on_lnInputDir_textChanged(QString )
 
     m_usingBrowseInput = s_last_inputfiles_str.isEmpty();
     ui->chkTopLevelOnly->setEnabled(!m_usingBrowseInput);
+    ui->nClearInput->setEnabled(!m_find_dir.isEmpty());
 }
 
 void MainWindow::on_bnOK_pressed()
@@ -278,6 +280,13 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
     {
         args << "--image-type";
         args << imageType;
+    }
+
+    QString extraParams = ui->lnExtraParams->text().trimmed();
+    if (!extraParams.isEmpty())
+    {
+        args << "--extra-parameters";
+        args << extraParams;
     }
 
     if (ui->chkOverWrite->checkState() == Qt::Checked)
@@ -588,10 +597,10 @@ void MainWindow::on_bnClearOutput_clicked()
 
 void MainWindow::on_nClearInput_clicked()
 {
-    QString const & path = ui->lnInputDir->text().trimmed();
-    SplitComponents const splitter = splitPath(path);
-    QString dir = splitter.get<0>();
-    clearDirectory(dir);
+    if (!m_find_dir.isEmpty() && m_find_dir.indexOf('/') > -1)
+    {
+        clearDirectory(m_find_dir);
+    }
 }
 
 void MainWindow::on_cbUnits_currentIndexChanged(QString str)
