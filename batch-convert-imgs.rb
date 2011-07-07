@@ -43,6 +43,8 @@ options = [
     ["--no-suffix", GetoptLong::NO_ARGUMENT ],
     ["--newer-than-epoch", GetoptLong::REQUIRED_ARGUMENT ],
     ["--image-type", GetoptLong::REQUIRED_ARGUMENT ],
+    ["--extra-parameters", GetoptLong::REQUIRED_ARGUMENT ],
+    ["--only-if-resize", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -100,6 +102,8 @@ end
 @@no_sharpening = false
 @@newer_than = 0
 @@image_type = 'TrueColor'
+@@extra_parameters = []
+@@only_if_resize = false
 
 opts.each {
     | opt, arg |
@@ -169,6 +173,10 @@ opts.each {
         @@newer_than = arg.to_i
     elsif (opt == "--image-type")
         @@image_type = arg
+    elsif (opt == "--extra-parameters")
+        @@extra_parameters << arg.split(/\s+/)
+    elsif (opt == "--only-if-resize")
+        @@only_if_resize = true
     end
 }
 
@@ -373,24 +381,36 @@ def process__(source, reldir = nil)
         end
         return false
     end
-    
+
     input_profile_arg = !@@input_profile.nil? ? ['+profile', '*.ic?', '-profile', @@input_profile] : []
     profile_arg = !@@profile.nil? ? [input_profile_arg, '-profile', @@profile] : []
     image_type_arg = ['-type', @@image_type]
     frame_arg = resize_arg = density_arg = quality_arg = unsharp_arg = nil
     if (!@@straight)
         dims = identify(source)
+        if (@@only_if_resize)
+            dims2 = dims.collect {|i|i.to_i}
+            puts "#{source}: #{dims2[0]}x#{dims2[1]} px"
+            dims_max = dims2.max
+            target_max = [@@height_pixels.to_i, @@width_pixels.to_i].max
+            if (dims_max <= target_max)
+                puts "#{source}: no resize (#{dims_max} vs #{target_max} px)"
+                return false
+            end
+        end
         resize_args = if (dims[0].to_i < dims[1].to_i) then "#{@@height_pixels}x#{@@width_pixels or ''}>" else "#{@@width_pixels or ''}x#{@@height_pixels}>" end
         resize_arg = ['-filter', 'Lanczos', '-resize', resize_args]
-        if (@@ppi != 0 && !@@no_sharpening) 
+        if (@@ppi != 0)
             density_arg = ['-density', "#{@@ppi}x#{@@ppi}"]
-            unsharp_arg = ['-unsharp', "#{@@USMr}x#{@@USMs}+#{@@USM_amount}+#{@@USM_threshold}"]
+            if (!@@no_sharpening)
+                unsharp_arg = ['-unsharp', "#{@@USMr}x#{@@USMs}+#{@@USM_amount}+#{@@USM_threshold}"]
+            end
         end
         quality_arg = ['-quality', @@quality.to_s] unless (@@quality == 0)
         frame_arg = (@@frame_dim != 0) ? ['-mattecolor', @@frame_color, '-frame', "#{@@frame_px}x#{@@frame_px}"] : nil
     end
 
-    @@scVerbose.safeExec("convert", [source, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, target].flatten.compact)
+    @@scVerbose.safeExec("convert", [source, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, @@extra_parameters, target].flatten.compact)
 
     if (@@exif_copy)
         ExifToolUtils.copyExif(@@sc, source, target)
@@ -404,7 +424,7 @@ end
 @@thread_condition = ConditionVariable.new
 @@jobs_done = 0
 @@jobs_skipped = 0
-@@jobs_failed = 0
+@@jobs_failed = []
 @@jobs_started = 0
 @@jobs_total = 0
 @@all_jobs_started = false
@@ -446,7 +466,8 @@ def process(*args)
                         failed = false
                         begin
                             skipped = !process__(*arguments)
-                        rescue
+                        rescue Exception => obj
+                            p obj
                             failed = true
                         ensure
                             @@thread_mutex.synchronize {
@@ -455,7 +476,7 @@ def process(*args)
                                 end
                                 @@jobs_done += 1
                                 @@jobs_skipped += 1 if (skipped)
-                                @@jobs_failed += 1 if (failed)
+                                @@jobs_failed << arguments[0] if (failed)
                             }
                         end
                     end # while
@@ -524,6 +545,11 @@ raise "strange" if (@@found_count != @@jobs_total)
 }
 
 really_processed = @@jobs_done - @@jobs_skipped
-puts "\n#{File.basename($0)}: #{if (@@dry_run) then ' (DRY RUN) ' end}Processed #{really_processed} image#{if (really_processed != 1) then 's' end}#{if (@@jobs_skipped>0) then ' (skipped ' + @@jobs_skipped.to_s + ')' end}#{if (@@jobs_failed>0) then ' (FAILED ' + @@jobs_failed.to_s + ')' end}."
-
+puts "\n#{File.basename($0)}: #{if (@@dry_run) then ' (DRY RUN) ' end}Processed #{really_processed} image#{if (really_processed != 1) then 's' end}#{if (@@jobs_skipped>0) then ' (skipped ' + @@jobs_skipped.to_s + ')' end}."
+if (@@jobs_failed.length>0)
+    puts 'FAILED ' + @@jobs_failed.length.to_s + ':'
+    @@jobs_failed.each {
+        |arg| puts arg
+    }
+end
 exit(really_processed > 0 ? 0 : -1)
