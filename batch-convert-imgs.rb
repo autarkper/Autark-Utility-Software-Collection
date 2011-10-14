@@ -552,4 +552,4 @@ if (@@jobs_failed.length>0)
         |arg| puts arg
     }
 end
-exit(really_processed > 0 ? 0 : -1)
+exit(really_processed > 0 ? @@jobs_failed.length : -1)
