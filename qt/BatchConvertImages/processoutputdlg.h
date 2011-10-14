@@ -27,6 +27,7 @@ private:
     Ui::ProcessOutputDlg *ui;
     QProcess m_process;
     int m_noCloseCounter; // prevent close if non-zero
+    bool m_done;
     bool m_aborting;
     int m_exitCode;
 

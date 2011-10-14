@@ -6,7 +6,8 @@
 ProcessOutputDlg::ProcessOutputDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ProcessOutputDlg),
-    m_noCloseCounter(2), // require a number of cancels before closing dialog on running process
+    m_noCloseCounter(0), // require a number of cancels before closing dialog on running process
+    m_done(false),
     m_aborting(false)
 {
     ui->setupUi(this);
@@ -86,7 +87,11 @@ void ProcessOutputDlg::on_process_finished(int exitCode, QProcess::ExitStatus /*
     QTextStream(&message) << "Process finished with exitcode " << exitCode;
     ui->leStatus->setText(message);
     ui->bnClose->setText(tr("Done"));
-    m_noCloseCounter = 0;
+    if (exitCode == 0 && m_noCloseCounter != 0)
+    {
+        accept();
+    }
+    m_done = true;
 }
 
 void ProcessOutputDlg::on_process_error( QProcess::ProcessError error )
@@ -100,31 +105,33 @@ void ProcessOutputDlg::on_process_error( QProcess::ProcessError error )
     QTextStream(&message) << "Process creation error " << static_cast<int>(error);
     ui->leStatus->setText(message);
     ui->bnClose->setText(tr("Done"));
-    m_noCloseCounter = 0;
+    m_done = true;
 }
 
 void ProcessOutputDlg::reject()
 {
-    if (m_noCloseCounter == 2)
+    if (!m_done)
     {
-        --m_noCloseCounter;
-        ui->leStatus->setText("Cancelling the dialog will abort!");
-        ui->bnClose->setText(tr("Abort"));
-        return;
+        if (m_noCloseCounter == 0)
+        {
+            ++m_noCloseCounter;
+            ui->leStatus->setText("Cancelling the dialog will abort!");
+            ui->bnClose->setText(tr("Abort"));
+            return;
+        }
+
+        if (m_noCloseCounter == 1)
+        {
+            ++m_noCloseCounter;
+            m_aborting = true;
+            m_process.kill();
+            ui->leStatus->setText("Job aborted.");
+            ui->bnClose->setText(tr("Close"));
+
+            // Just killing the process isn't enough, it will cause problems
+            m_process.waitForFinished(3000);
+            return;
+        }
     }
-
-    if (m_noCloseCounter == 1)
-    {
-        --m_noCloseCounter;
-        m_aborting = true;
-        m_process.kill();
-        ui->leStatus->setText("Job aborted.");
-        ui->bnClose->setText(tr("Close"));
-
-        // Just killing the process isn't enough, it will cause problems
-        m_process.waitForFinished(3000);
-        return;
-    }
-
     QDialog::reject();
 }
