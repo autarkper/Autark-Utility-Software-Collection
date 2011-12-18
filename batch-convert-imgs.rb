@@ -45,6 +45,8 @@ options = [
     ["--image-type", GetoptLong::REQUIRED_ARGUMENT ],
     ["--extra-parameters", GetoptLong::REQUIRED_ARGUMENT ],
     ["--only-if-resize", GetoptLong::NO_ARGUMENT ],
+    ["--despeckle", GetoptLong::NO_ARGUMENT ],
+    ["--noise-radius", GetoptLong::REQUIRED_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -104,6 +106,8 @@ end
 @@image_type = 'TrueColor'
 @@extra_parameters = []
 @@only_if_resize = false
+@@despeckle = false
+@@noise_radius = nil
 
 opts.each {
     | opt, arg |
@@ -177,6 +181,10 @@ opts.each {
         @@extra_parameters << arg.split(/\s+/)
     elsif (opt == "--only-if-resize")
         @@only_if_resize = true
+    elsif (opt == "--despeckle")
+        @@despeckle = true
+    elsif (opt == "--noise-radius")
+        @@noise_radius = arg
     end
 }
 
@@ -386,6 +394,8 @@ def process__(source, reldir = nil)
     profile_arg = !@@profile.nil? ? [input_profile_arg, '-profile', @@profile] : []
     image_type_arg = ['-type', @@image_type]
     frame_arg = resize_arg = density_arg = quality_arg = unsharp_arg = nil
+    despeckle_arg = nil
+    noise_arg = nil
     if (!@@straight)
         dims = identify(source)
         if (@@only_if_resize)
@@ -398,6 +408,8 @@ def process__(source, reldir = nil)
                 return false
             end
         end
+        despeckle_arg = "-despeckle" if (@@despeckle)
+        noise_arg = ["-noise", @@noise_radius.to_s] if (@@noise_radius)
         resize_args = if (dims[0].to_i < dims[1].to_i) then "#{@@height_pixels}x#{@@width_pixels or ''}>" else "#{@@width_pixels or ''}x#{@@height_pixels}>" end
         resize_arg = ['-filter', 'Lanczos', '-resize', resize_args]
         if (@@ppi != 0)
@@ -410,7 +422,7 @@ def process__(source, reldir = nil)
         frame_arg = (@@frame_dim != 0) ? ['-mattecolor', @@frame_color, '-frame', "#{@@frame_px}x#{@@frame_px}"] : nil
     end
 
-    @@scVerbose.safeExec("convert", [source, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, @@extra_parameters, target].flatten.compact)
+    @@scVerbose.safeExec("convert", [source, noise_arg, despeckle_arg, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, @@extra_parameters, target].flatten.compact)
 
     if (@@exif_copy)
         ExifToolUtils.copyExif(@@sc, source, target)

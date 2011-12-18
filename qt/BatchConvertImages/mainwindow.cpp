@@ -311,6 +311,18 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
     }
     else
     {
+        if (ui->chkDespeckle->checkState() == Qt::Checked)
+        {
+            args << "--despeckle";
+        }
+        QString noise_radius = ui->leNoiseRadius->text().trimmed();
+        if (!noise_radius.isEmpty() && ui->chkNoise->checkState() == Qt::Checked)
+        {
+            args << "--noise";
+            args << noise_radius;
+        }
+
+
         bool dim_arg = false;
         QString height = ui->leHeight->text().trimmed();
         if (!height.isEmpty())
@@ -434,9 +446,14 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
     }
 
     unsigned int lastTime_t = QDateTime::currentDateTime().toTime_t();
+    QString const title = this->windowTitle();
+    this->setWindowTitle("["+ title + "]");
+    this->setDisabled(true);
     ProcessOutputDlg outputDlg(this);
     outputDlg.setVerbose(ui->chkVerbose->checkState() == Qt::Checked);
     int dc = outputDlg.exec(s_theProgram, args);
+    this->setDisabled(false);
+    this->setWindowTitle(title);
     if (dc == QDialog::Accepted && !bDryRun)
     {
         s_lastTime_t = lastTime_t;
@@ -488,6 +505,7 @@ void MainWindow::on_lePPI_textChanged(QString str)
             double radius = ppi / 160.0;
             std::string strRadius = boost::str(boost::format("%.1f") % radius);
             ui->leUsmRadius->setText(strRadius.c_str());
+            ui->leNoiseRadius->setText(strRadius.c_str());
 
             double sigma = (radius > 1.0) ? sqrt(radius) : radius;
             std::string strSigma = boost::str(boost::format("%.1f") % sigma);

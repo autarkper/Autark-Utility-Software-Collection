@@ -349,12 +349,12 @@
           <property name="flat">
            <bool>false</bool>
           </property>
-          <widget class="QWidget" name="">
+          <widget class="QWidget" name="layoutWidget">
            <property name="geometry">
             <rect>
              <x>11</x>
              <y>26</y>
-             <width>483</width>
+             <width>517</width>
              <height>62</height>
             </rect>
            </property>
@@ -779,7 +779,7 @@
              </sizepolicy>
             </property>
             <property name="title">
-             <string>&amp;Quality:</string>
+             <string/>
             </property>
             <property name="flat">
              <bool>false</bool>
@@ -795,7 +795,7 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
+             <item row="0" column="2">
               <widget class="QLineEdit" name="leQuality">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -832,6 +832,27 @@
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLineEdit" name="leNoiseRadius">
+               <property name="inputMethodHints">
+                <set>Qt::ImhDigitsOnly</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="chkNoise">
+               <property name="text">
+                <string>Noise radius:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="chkDespeckle">
+               <property name="text">
+                <string>Despeckle</string>
                </property>
               </widget>
              </item>
