@@ -856,6 +856,13 @@
                </property>
               </widget>
              </item>
+             <item row="2" column="2">
+              <widget class="QCheckBox" name="chkEnhance">
+               <property name="text">
+                <string>Enhance</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>

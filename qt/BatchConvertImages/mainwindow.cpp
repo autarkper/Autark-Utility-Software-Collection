@@ -321,6 +321,10 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
             args << "--noise";
             args << noise_radius;
         }
+        if (ui->chkEnhance->checkState() == Qt::Checked)
+        {
+            args << "--enhance";
+        }
 
 
         bool dim_arg = false;
@@ -515,6 +519,7 @@ void MainWindow::on_lePPI_textChanged(QString str)
     else
     {
         ui->leUsmRadius->clear();
+        ui->leNoiseRadius->clear();
     }
 }
 
