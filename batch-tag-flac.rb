@@ -10,6 +10,8 @@ require 'getoptlong'
 options = [
     ["--dry-run", GetoptLong::NO_ARGUMENT ],
     ["--overwrite", GetoptLong::NO_ARGUMENT ],
+    ["--song-before-artist", GetoptLong::NO_ARGUMENT ],
+    ["--artist-before-song", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -17,6 +19,7 @@ opts.set_options(*options)
 
 @@dry_run = false
 @@overwrite = false
+@@song_before_artist = false
 
 opts.each {
     | opt, arg |
@@ -24,6 +27,10 @@ opts.each {
         @@dry_run = true
     elsif (opt == "--overwrite")
         @@overwrite = true
+    elsif (opt == "--song-before-artist")
+        @@song_before_artist = true
+    elsif (opt == "--artist-before-song")
+        @@song_before_artist = false
     end
 }
 
@@ -116,7 +123,7 @@ def recurse(entry__, staten)
             if (filexx.match(%r/(\A(\d|-)+)\s*(.*)\.flac/))
                 number, bulk = $1, $3
                 if (bulk.match(/(.+?)\s+-\s+(.+)/))
-                    artisten, song = $1, $2
+                    if (@@song_before_artist) then song, artisten =  $1, $2 else artisten, song = $1 , $2 end
                 else
                     artisten, song = nil, bulk
                 end
