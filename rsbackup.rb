@@ -26,6 +26,9 @@ tmp = %w(
 
 options = { 
     "--dry-run" => 1,
+    "--perms" => 1,
+    "--owner" => 1,
+    "--group" => 1,
 }
 require 'getoptlong'
 
@@ -99,7 +102,7 @@ def execute(command, args)
     output.call "\nMålkatalog: " + @@hardtarget
     output.call "Backupkatalog: " + @@backup_dir
     output.call "Logfile: " + @@logfile
-    output.call "Kommando:\n" + args.join( ' ' )
+    output.call "Kommando:\nrsync" + args.join( ' ' )
     if (!@@bBatchMode && STDERR.isatty)
         STDOUT.flush
         STDERR.puts "\nOK? (Press CTRL+C to abort.)"
@@ -186,6 +189,7 @@ ARGV.each {
             "--delete",
             "--delete-excluded",
             "--force",
+            "--hard-links",
             "--backup-dir=" + @@backup_dir,
     ].compact + excludes.collect {
         |a|
