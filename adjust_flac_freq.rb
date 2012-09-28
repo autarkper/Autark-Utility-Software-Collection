@@ -95,18 +95,18 @@ if (!@@out_dir.nil?)
     end
 else
     if (!@@replace)
-        abort "#{@@myprog}: must state either --out-dir or --replace\n"
+        abort "#{@@myprog}: must state either --output-dir or --replace\n"
     end
 end
 
-
-tfwav = Tempfile.new(@@myprog)
+tmp = '/var/tmp'
+tfwav = Tempfile.new(@@myprog, tmp)
 tfwav.close
 
-tfflac = Tempfile.new(@@myprog)
+tfflac = Tempfile.new(@@myprog, tmp)
 tfflac.close
 
-tfmetadata = Tempfile.new(@@myprog)
+tfmetadata = Tempfile.new(@@myprog, tmp)
 tfmetadata.close
 
 def moveFile(syscommand, source, target)
@@ -177,12 +177,15 @@ ARGV.each {
         next
     end
     
-    if (0 != sysco.safeExec('flac', ["--best", "--totally-silent", "--sample-rate=#{@@new_sample_rate}", "--force", "-o", tfflac.path, wav_tempfile]))
+    silent = @@verbose ? nil : "--silent"
+    
+    flac_tmpfile = tfflac.path
+    if (0 != sysco.safeExec('flac', ["--best", silent, "--sample-rate=#{@@new_sample_rate}", "--force", "-o", flac_tmpfile, wav_tempfile].compact))
         next
     end
 
     if (0 == sysco.safeExec('metaflac', ["--export-tags-to=#{tfmetadata.path}", file]))
-        if (0 != sysco.safeExec('metaflac', ["--import-tags-from=#{tfmetadata.path}", tfflac.path]))
+        if (0 != sysco.safeExec('metaflac', ["--import-tags-from=#{tfmetadata.path}", flac_tmpfile]))
             STDERR.puts "#{@@myprog}: failed to copy metadata from  '#{file}' to '#{outfile}'"
         end
     end
@@ -191,13 +194,13 @@ ARGV.each {
         mtime = File.stat(file).mtime
         mtime += 1 # bump the modification time by just one second - should still be enough for rsync to easily discover the change
         
-        if (0 != sysco.safeExec('touch', ['-m', '-d', mtime.to_s, '--no-create', tfflac.path]))
+        if (0 != sysco.safeExec('touch', ['-m', '-d', mtime.to_s, '--no-create', flac_tmpfile]))
             STDERR.puts "#{@@myprog}: failed to touch '#{outfile}'"
             next
         end
     end
 
-    if (0 != sysco.safeExec('chmod', ['--reference', file, tfflac.path]))
+    if (0 != sysco.safeExec('chmod', ['--reference', file, flac_tmpfile]))
         STDERR.puts "#{@@myprog}: failed to copy file mode from  '#{file}' to '#{outfile}'"
         next
     end
@@ -213,8 +216,8 @@ ARGV.each {
         end
     end
     
-    if (0 != moveFile(sysco, tfflac.path, outfile))
-        STDERR.puts "#{@@myprog}: failed to copy #{tfflac.path} to '#{outfile}'"
+    if (0 != moveFile(sysco, flac_tmpfile, outfile))
+        STDERR.puts "#{@@myprog}: failed to copy #{flac_tmpfile} to '#{outfile}'"
     end
 
     @@failures -= 1 # reset
