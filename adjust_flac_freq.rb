@@ -100,9 +100,6 @@ else
 end
 
 tmp = '/var/tmp'
-tfwav = Tempfile.new(@@myprog, tmp)
-tfwav.close
-
 tfflac = Tempfile.new(@@myprog, tmp)
 tfflac.close
 
@@ -153,34 +150,59 @@ ARGV.each {
         puts "'#{file}' -> '#{outfile}'"
     end
     
-    wav_tempfile = tfwav.path
-
     sysco = @@sysc.dup
     sysco.failSoft(true)
     
+    flac_sample_rate = sysco.execBackTick('metaflac', ['--show-sample-rate', file]).to_i
+    if (@@new_sample_rate == flac_sample_rate)
+        STDERR.puts "#{@@myprog}: flsdkfjrequency unchanged: #{flac_sample_rate}"
+        next
+    end
     if (@@expected_rate != nil)
-        flac_sample_rate = sysco.execBackTick('metaflac', ['--show-sample-rate', file]).to_i
         if (flac_sample_rate != @@expected_rate)
-            STDERR.puts "#{@@myprog}: skipping '#{file}' - sample rate '#{flac_sample_rate}'"
+            STDERR.puts "#{@@myprog}: skipping '#{file}' - sample rate '#{flac_sample_rate}' - expected '#{@@expected_rate}'"
             next
         end
     end
     
-    if (0 != sysco.safeExec('flac', ['--decode', '--silent', '--force', file, '-o' , wav_tempfile]))
-        next
-    end
-    
-    File.chmod(0644, wav_tempfile)
-    if (0 != sysco.safeExec(File.join(File.split($0)[0], 'adjust_wav_freq.rb'),
-        (@@expected_rate.nil? ? [] : ['--expected-rate', @@expected_rate.to_s]) +
-        ['--new-sample-rate', @@new_sample_rate.to_s , wav_tempfile]))
-        next
-    end
-    
     silent = @@verbose ? nil : "--silent"
-    
     flac_tmpfile = tfflac.path
-    if (0 != sysco.safeExec('flac', ["--best", silent, "--sample-rate=#{@@new_sample_rate}", "--force", "-o", flac_tmpfile, wav_tempfile].compact))
+
+    class MyException < RuntimeError
+    end
+    begin 
+        process_flac = proc {
+            |rd|
+            buf = rd.read(24)
+            freq_raw = rd.read(4)
+            freq = freq_raw.unpack("I")[0]
+            if (!@@expected_rate.nil? && freq != @@expected_rate)
+                STDERR.puts "#{@@myprog}: original frequency: #{freq}, expected: #{@@expected_rate}"
+                @@failures += 1
+            elsif (freq == @@new_sample_rate)
+                @@failures += 1
+                STDERR.puts "#{@@myprog}: frequency unchanged: #{freq}"
+                raise MyException.new               
+            end
+            buf += [@@new_sample_rate].pack("I")
+            
+            sh = @@sysc.dup
+            sh.execWritePipe('flac', ["--best", silent, "--sample-rate=#{@@new_sample_rate}", "--force", "-o", flac_tmpfile, "-"].compact) {
+                |wr|
+
+                while buf
+                    wr.write(buf)
+                    buf = rd.read(16000)
+                end
+            }
+        }
+
+        sh = @@sysc.dup
+        sh.execReadPipe('flac', ['--decode', '--silent', '--force', file, '-o', '-']) {
+            |rd|
+            process_flac.call(rd)
+        }
+    rescue MyException => exception
         next
     end
 
