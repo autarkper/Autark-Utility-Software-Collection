@@ -33,7 +33,6 @@ int ProcessOutputDlg::exec(const QString &program, const QStringList &args)
     {
         m_process.setWorkingDirectory(m_cwd);
     }
-    m_process.setProcessChannelMode(QProcess::MergedChannels);
     if (m_verbose)
     {
         QStringList cmdline;
@@ -48,9 +47,19 @@ int ProcessOutputDlg::exec(const QString &program, const QStringList &args)
 
 void ProcessOutputDlg::readData()
 {
-    int size = m_process.bytesAvailable();
-    QByteArray data = m_process.read(size);
-    ui->m_textBrowser->append(data);
+    m_process.setReadChannel(QProcess::StandardOutput);
+    if (int size = m_process.bytesAvailable())
+    {
+        QByteArray data = m_process.read(size);
+        ui->m_textBrowser->append(data);
+    }
+
+    m_process.setReadChannel(QProcess::StandardError);
+    if (int size = m_process.bytesAvailable())
+    {
+        QByteArray data = m_process.read(size);
+        ui->m_textBrowser->append("[Std error]\n" + data + "[/Std error]");
+    }
 }
 
 ProcessOutputDlg::~ProcessOutputDlg()
