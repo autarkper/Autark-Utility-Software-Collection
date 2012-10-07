@@ -58,7 +58,7 @@ void ProcessOutputDlg::readData()
     if (int size = m_process.bytesAvailable())
     {
         QByteArray data = m_process.read(size);
-        ui->m_textBrowser->append("[Std error]\n" + data + "[/Std error]");
+        ui->m_textBrowser->append("\n[stderr]" + data + "[/stderr]");
     }
 }
 
