@@ -19,6 +19,7 @@ options = [
     ["--overwrite", GetoptLong::NO_ARGUMENT ],
     ["--replace", "--inplace", GetoptLong::NO_ARGUMENT ],
     ["--nobackup", GetoptLong::NO_ARGUMENT ],
+    ["--keep-backup", GetoptLong::NO_ARGUMENT ],
     ["--notouch", GetoptLong::NO_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--dry-run", GetoptLong::NO_ARGUMENT ],
@@ -34,7 +35,7 @@ opts.set_options(*options)
 @@expected_rate = nil
 @@replace = false
 @@verbose = false
-@@do_backup = true
+@@no_backup = true
 @@do_touch = true
 @@dry_run = false
 
@@ -60,8 +61,10 @@ opts.each {
         @@overwrite = true
     elsif (opt == "--verbose")
         @@verbose = true
+    elsif (opt == "--keep-backup")
+        @@no_backup = false
     elsif (opt == "--nobackup")
-        @@do_backup = false
+        @@no_backup = true
     elsif (opt == "--notouch")
         @@do_touch = false
     elsif (opt == "--dry-run")
@@ -155,7 +158,7 @@ ARGV.each {
     
     flac_sample_rate = sysco.execBackTick('metaflac', ['--show-sample-rate', file]).to_i
     if (@@new_sample_rate == flac_sample_rate)
-        STDERR.puts "#{@@myprog}: flsdkfjrequency unchanged: #{flac_sample_rate}"
+        STDERR.puts "#{@@myprog}: frequency unchanged: #{flac_sample_rate}"
         next
     end
     if (@@expected_rate != nil)
@@ -178,9 +181,8 @@ ARGV.each {
             freq = freq_raw.unpack("I")[0]
             if (!@@expected_rate.nil? && freq != @@expected_rate)
                 STDERR.puts "#{@@myprog}: original frequency: #{freq}, expected: #{@@expected_rate}"
-                @@failures += 1
+                raise MyException.new               
             elsif (freq == @@new_sample_rate)
-                @@failures += 1
                 STDERR.puts "#{@@myprog}: frequency unchanged: #{freq}"
                 raise MyException.new               
             end
@@ -227,21 +229,26 @@ ARGV.each {
         next
     end
 
+    bakfile = nil
     if (@@replace)
-        if (@@do_backup)
-            file_fc = File.split(file)
-            bakfile = File.join(file_fc[0], "bak." + file_fc[1])
-            if (0 != moveFile(sysco, file, bakfile))
-                STDERR.puts "#{@@myprog}: failed to create backup file '#{bakfile}'"
-                next
-            end
+        file_fc = File.split(file)
+        bakfile = File.join(file_fc[0], "bak." + file_fc[1])
+        if (0 != moveFile(sysco, file, bakfile))
+            STDERR.puts "#{@@myprog}: failed to create backup file '#{bakfile}'"
+            next
         end
     end
     
     if (0 != moveFile(sysco, flac_tmpfile, outfile))
         STDERR.puts "#{@@myprog}: failed to copy #{flac_tmpfile} to '#{outfile}'"
+        next
     end
 
+    if (@@replace && @@no_backup && bakfile)
+        if (0 != sysco.safeExec('rm', [bakfile]))
+            STDERR.puts "#{@@myprog}: failed to remove backup file '#{bakfile}'"
+        end
+    end
     @@failures -= 1 # reset
 }
 
