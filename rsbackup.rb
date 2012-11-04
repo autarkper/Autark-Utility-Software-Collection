@@ -6,15 +6,12 @@ require "SystemCommand"
 usage = <<ENDS
 usage: #{$0}: dir [,dir] --target target-dir
 options:
-	--wet-run: required (by default, only a dry-run is done)
-	--checksum: perform a checksum comparison (very slow!)
-	--batch: don't prompt OK
-	--help: show this help text
-	--detailed: invoke rsync with --itemize-changes
+        --wet-run: required (by default, only a dry-run is done)
+        --checksum: perform a checksum comparison (very slow!)
+        --batch: don't prompt OK
+        --help: show this help text
+        --detailed: invoke rsync with --itemize-changes
 ENDS
-
-# $exclude_expr[0] = '.*/[Cc]ache[0-9]*/.*';
-# $exclude_expr[1] = '.*~$';
 
 excludes = %w(
 *.o
@@ -73,11 +70,11 @@ if (@@target == nil)
 end
 
 if (!FileTest.exists?(@@target))
-    puts "baskatalogen (" + @@target + ") finns inte"
+    puts "base directory (" + @@target + ") does not exist"
     exit
 end
 if (!FileTest.directory?(@@target))
-    puts "baskatalogen (" + @@target + ") måste vara en katalog"
+    puts "base directory (" + @@target + ") is not a directory"
     exit
 end
 
@@ -87,7 +84,7 @@ if (ARGV.length < 1)
 end
 
 if (@@bDryRun)
-    puts "\nTORRKÖRNING! För att verkligen köra, ange flaggan --wet-run."
+    puts "\nDRY RUN! To perform a real backup, run with --wet-run."
 end
 
 def execute(command, args)
@@ -99,10 +96,10 @@ def execute(command, args)
         STDOUT.puts line
         STDOUT.flush
         }
-    output.call "\nMålkatalog: " + @@hardtarget
-    output.call "Backupkatalog: " + @@backup_dir
-    output.call "Logfile: " + @@logfile
-    output.call "Kommando:\nrsync" + args.join( ' ' )
+    output.call "\nTarget directory: " + @@hardtarget
+    output.call "Backup directory: " + @@backup_dir
+    output.call "Log file: " + @@logfile
+    output.call "Command:\nrsync" + args.join( ' ' )
     if (!@@bBatchMode && STDERR.isatty)
         STDOUT.flush
         STDERR.puts "\nOK? (Press CTRL+C to abort.)"
@@ -148,20 +145,20 @@ dirs = {}
 ARGV.each {
     | dir |
     if dirs.has_key?(File.expand_path(dir))
-        puts "upprepad katalog: " + dir
+        puts "repeated directory: " + dir
         exit 
     end
     if ( dir.dup.chomp!("/") != nil )
-        puts dir + ": ange bara katalognamn, utan avslutande '/'"
+        puts dir + ": give directory name only, without trailing '/'"
         exit
     end
     
     if ( dir[0,1] != "/" )
-        puts dir + ": sökväg måste vara absolut"
+        puts dir + ": path must be absolute, not relative"
         exit
     end
     if ( ! File.stat(dir).directory? )
-        puts dir + ": sökväg är inte en katalog"
+        puts dir + ": path is not a directory"
         exit
     end
     dirs[File.expand_path(dir)] = 1
@@ -177,7 +174,7 @@ ARGV.each {
     @@hardtarget = File.expand_path(File.join(@@target, reldir, ".."))
     
     if (!FileTest.exists?(@@hardtarget))
-        puts "målkatalogen (" + @@hardtarget + ") måste existera"
+        puts "target directory (" + @@hardtarget + ") must exist"
         exit
     end
     
