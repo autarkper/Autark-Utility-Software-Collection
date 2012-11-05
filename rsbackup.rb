@@ -5,12 +5,14 @@ require "SystemCommand"
 
 usage = <<ENDS
 usage: #{$0}: dir [,dir] --target target-dir
+required option:
+        --target: the directory where the backup is stored
 options:
-        --wet-run: required (by default, only a dry-run is done)
+        --wet-run: required to actually perform a backup (by default, only a dry-run is done)
         --checksum: perform a checksum comparison (very slow!)
-        --batch: don't prompt OK
-        --help: show this help text
+        --batch: don't prompt for OK
         --detailed: invoke rsync with --itemize-changes
+        --help: show this help text
 ENDS
 
 excludes = %w(
@@ -70,11 +72,11 @@ if (@@target == nil)
 end
 
 if (!FileTest.exists?(@@target))
-    puts "base directory (" + @@target + ") does not exist"
+    puts "target directory (" + @@target + ") does not exist"
     exit
 end
 if (!FileTest.directory?(@@target))
-    puts "base directory (" + @@target + ") is not a directory"
+    puts "target directory (" + @@target + ") is not a directory"
     exit
 end
 
