@@ -103,10 +103,6 @@ else
 end
 
 
-tmp = '/var/tmp'
-tfmetadata = Tempfile.new(@@myprog, tmp)
-tfmetadata.close
-
 def moveFile(syscommand, source, target)
     return syscommand.safeExec('mv', [source, target])
 end
@@ -213,10 +209,19 @@ for_each_file = proc {
         exit(1)
     end
 
-    if (0 == sysco.safeExec('metaflac', ["--export-tags-to=#{tfmetadata.path}", file]))
-        if (0 != sysco.safeExec('metaflac', ["--import-tags-from=#{tfmetadata.path}", flac_tmpfile]))
-            STDERR.puts "#{@@myprog}: failed to copy metadata from  '#{file}' to '#{outfile}'"
-        end
+    metadata = nil
+    if (0 != sysco.execReadPipe('metaflac', ["--export-tags-to=-", file]) {
+        |rd|
+        metadata = rd.read
+        })
+        STDERR.puts "#{@@myprog}: failed to read metadata from  '#{file}'"
+    end
+
+    if (metadata && metadata.length > 0 && 0 != sysco.execWritePipe('metaflac', ["--import-tags-from=-", flac_tmpfile]) {
+        |wr|
+        wr.write(metadata)
+        })
+        STDERR.puts "#{@@myprog}: failed to write metadata to '#{flac_tmpfile}'"
     end
 
     if (@@do_touch)
