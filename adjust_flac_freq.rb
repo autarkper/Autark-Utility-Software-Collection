@@ -102,10 +102,8 @@ else
     end
 end
 
-tmp = '/var/tmp'
-tfflac = Tempfile.new(@@myprog, tmp)
-tfflac.close
 
+tmp = '/var/tmp'
 tfmetadata = Tempfile.new(@@myprog, tmp)
 tfmetadata.close
 
@@ -115,20 +113,23 @@ end
 
 @@failures = 0
 
-ARGV.each {
+for_each_file = proc {
     |file|
-
-    @@failures += 1 # will be reset on success
     
     if (!File.exists?(file))
         STDERR.puts "#{@@myprog}: file '#{file}' does not exist"
-        next
+        exit(1)
     end
     
+    stat = File.stat(file)
+    if (stat.directory?)
+        abort "#{@@myprog}: input file '#{file}' is a directory\n"
+    end
+
     outfile = if (@@replace)
         if (!File.stat(file).writable?)
             STDERR.puts "#{@@myprog}: cannot replace read-only file '#{file}'"
-            next
+            exit(1)
         end
         file
     else
@@ -145,7 +146,7 @@ ARGV.each {
     
     if (File.exists?(outfile) && !@@overwrite)
         puts "#{@@myprog}: cannot overwrite existing output file '#{outfile}'"
-        next
+        exit(1)
     end
 
     if (!@@verbose)
@@ -159,15 +160,19 @@ ARGV.each {
     flac_sample_rate = sysco.execBackTick('metaflac', ['--show-sample-rate', file]).to_i
     if (@@new_sample_rate == flac_sample_rate)
         STDERR.puts "#{@@myprog}: frequency unchanged: #{flac_sample_rate}"
-        next
+        exit(1)
     end
     if (@@expected_rate != nil)
         if (flac_sample_rate != @@expected_rate)
             STDERR.puts "#{@@myprog}: skipping '#{file}' - sample rate '#{flac_sample_rate}' - expected '#{@@expected_rate}'"
-            next
+            exit(1)
         end
     end
-    
+
+    target_dir = File.split(outfile)[0]
+    tfflac = Tempfile.new(@@myprog, target_dir)
+    tfflac.close
+
     silent = @@verbose ? nil : "--silent"
     flac_tmpfile = tfflac.path
 
@@ -205,7 +210,7 @@ ARGV.each {
             process_flac.call(rd)
         }
     rescue MyException => exception
-        next
+        exit(1)
     end
 
     if (0 == sysco.safeExec('metaflac', ["--export-tags-to=#{tfmetadata.path}", file]))
@@ -220,13 +225,13 @@ ARGV.each {
         
         if (0 != sysco.safeExec('touch', ['-m', '-d', mtime.to_s, '--no-create', flac_tmpfile]))
             STDERR.puts "#{@@myprog}: failed to touch '#{outfile}'"
-            next
+            exit(1)
         end
     end
 
     if (0 != sysco.safeExec('chmod', ['--reference', file, flac_tmpfile]))
         STDERR.puts "#{@@myprog}: failed to copy file mode from  '#{file}' to '#{outfile}'"
-        next
+        exit(1)
     end
 
     bakfile = nil
@@ -235,13 +240,13 @@ ARGV.each {
         bakfile = File.join(file_fc[0], "bak." + file_fc[1])
         if (0 != moveFile(sysco, file, bakfile))
             STDERR.puts "#{@@myprog}: failed to create backup file '#{bakfile}'"
-            next
+            exit(1)
         end
     end
     
     if (0 != moveFile(sysco, flac_tmpfile, outfile))
         STDERR.puts "#{@@myprog}: failed to copy #{flac_tmpfile} to '#{outfile}'"
-        next
+        exit(1)
     end
 
     if (@@replace && @@no_backup && bakfile)
@@ -249,8 +254,29 @@ ARGV.each {
             STDERR.puts "#{@@myprog}: failed to remove backup file '#{bakfile}'"
         end
     end
-    @@failures -= 1 # reset
 }
 
+@@processed_count = 0
+ARGV.each {
+    |file|
+    @@failures += 1 # will be reset on success
+    @@processed_count += 1
+    pid = fork
+    if (!pid)
+        for_each_file.call(file)
+        exit(0)
+    else
+        ec = Process.waitpid2(pid,0)[1]
+        if (ec == 0) 
+            @@failures -= 1 # reset
+        end
+        next
+    end
+}
+if (@@verbose)
+    puts "#{@@myprog}: Files processed : #{@@processed_count}"
+end
+if (@@failures != 0)
+    STDERR.puts "#{@@myprog}: Failure count: #{@@failures}"
+end
 exit(@@failures)
-
