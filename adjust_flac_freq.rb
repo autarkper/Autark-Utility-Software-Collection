@@ -22,6 +22,7 @@ options = [
     ["--keep-backup", GetoptLong::NO_ARGUMENT ],
     ["--notouch", GetoptLong::NO_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
+    ["--silent", GetoptLong::NO_ARGUMENT ],
     ["--dry-run", GetoptLong::NO_ARGUMENT ],
 ]
 
@@ -38,6 +39,7 @@ opts.set_options(*options)
 @@no_backup = true
 @@do_touch = true
 @@dry_run = false
+@@silent = false
 
 opts.each {
     | opt, arg |
@@ -61,6 +63,10 @@ opts.each {
         @@overwrite = true
     elsif (opt == "--verbose")
         @@verbose = true
+        @@silent = false
+    elsif (opt == "--silent")
+        @@verbose = false
+        @@silent = true
     elsif (opt == "--keep-backup")
         @@no_backup = false
     elsif (opt == "--nobackup")
@@ -145,7 +151,7 @@ for_each_file = proc {
         exit(1)
     end
 
-    if (!@@verbose)
+    if (!@@silent)
         # this is actually rather terse, compared to the verbose output
         puts "'#{file}' -> '#{outfile}'"
     end
