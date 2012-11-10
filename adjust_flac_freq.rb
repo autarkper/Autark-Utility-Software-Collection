@@ -103,9 +103,7 @@ if (!@@out_dir.nil?)
         abort "#{@@myprog}: output dir '#{@@out_dir}' is not a directory\n"
     end
 else
-    if (!@@replace)
-        abort "#{@@myprog}: must state either --output-dir or --replace\n"
-    end
+    @@replace = true
 end
 
 
