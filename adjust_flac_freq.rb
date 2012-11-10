@@ -103,6 +103,7 @@ if (!@@out_dir.nil?)
         abort "#{@@myprog}: output dir '#{@@out_dir}' is not a directory\n"
     end
 else
+    @@overwrite = true
     @@replace = true
 end
 
