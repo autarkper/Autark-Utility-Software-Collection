@@ -150,15 +150,15 @@ for_each_file = proc {
         exit(1)
     end
 
-    if (!@@silent)
-        # this is actually rather terse, compared to the verbose output
-        puts "'#{file}' -> '#{outfile}'"
-    end
-    
     sysco = @@sysc.dup
     sysco.failSoft(true)
     
     flac_sample_rate = sysco.execBackTick('metaflac', ['--show-sample-rate', file]).to_i
+    if (!@@silent)
+        # this is actually rather terse, compared to the verbose output
+        puts "'#{file}' (#{flac_sample_rate}) -> '#{outfile}' (#{@@new_sample_rate})"
+    end
+    
     if (@@new_sample_rate == flac_sample_rate)
         STDERR.puts "#{@@myprog}: frequency unchanged: #{flac_sample_rate}"
         exit(1)
