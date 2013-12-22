@@ -395,9 +395,9 @@ rescue Exception
     exit 1
 end
 
-failure_count = @@target_count - @@jobs_ok;
+failure_count = @@jobs_total - @@jobs_ok;
 if (failure_count > 0)
-    puts "\n#{File.basename($0)}: Number of failures: #{@@failure_count}"
+    puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
 end
 puts "\n#{File.basename($0)}: Successfully converted #{@@jobs_ok} file#{if (@@jobs_ok != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
 
