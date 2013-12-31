@@ -161,6 +161,7 @@ end
 @@created_dir_mutex = Mutex.new
 @@created_dirs = {}
 @@temp_files = {}
+@@targets = {}
 
 def join_dirs(sourcen, reldir = nil)
     source = reldir.nil? ? sourcen: AutarkFileUtils::make_relative(sourcen, reldir)
@@ -207,7 +208,7 @@ end
 @@exists = 0
 @@converted = 0
 
-def process__(source, *args)
+def process__(job, source, *args)
     safesource = stripIllegal(source)
     
     base = File.basename(safesource).sub(/(.+)\.[^.]*/, '\1')
@@ -218,6 +219,7 @@ def process__(source, *args)
     # the "+ 2" is to compensate for minor time differences on some file systems
     if (not  exists or @@overwrite or (File.stat(target).mtime + 2) < File.stat(source).mtime)
         p [File.stat(target).mtime, File.stat(source).mtime] if exists
+        @@thread_mutex.synchronize {@@targets[job] = target}
         
         target_tmp = target + ".tmp" # work on a temporary file
         @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
@@ -260,7 +262,10 @@ def process__(source, *args)
         puts_command("mv", [target_tmp, target]) # now is the time to commit the change
         
         @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
-        @@thread_mutex.synchronize {@@converted += 1}
+        @@thread_mutex.synchronize {
+            @@converted += 1
+            @@targets.delete(job)
+        }
     else
         puts "don't overwrite: " + target
         @@thread_mutex.synchronize {@@exists += 1}
@@ -302,7 +307,7 @@ def process(source, *args)
                 puts "Job #{job}/#{@@target_count} start..."
             }
             begin
-                process__(source, *args)
+                process__(job, source, *args)
                 @@thread_mutex.synchronize {@@jobs_ok +=1;}
             ensure
                 @@thread_mutex.synchronize {
@@ -409,12 +414,16 @@ rescue Exception
     exit 1
 end
 
-failure_count = @@jobs_total - @@jobs_ok;
-if (failure_count > 0)
-    puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
-end
 if (@@exists > 0)
     puts "\n#{File.basename($0)}: Not overwritten: #{@@exists}"
 end
 puts "\n#{File.basename($0)}: Converted #{@@converted} file#{if (@@converted != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
+
+failure_count = @@jobs_total - @@jobs_ok;
+if (failure_count > 0)
+    puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
+end
+@@targets.keys.sort.each {
+    |failed_job| puts "FAILED: " + @@targets[failed_job]
+}
 
