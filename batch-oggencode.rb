@@ -23,6 +23,7 @@ options = [
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--lame", GetoptLong::NO_ARGUMENT ],
+    ["--copy", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ]
 
@@ -62,6 +63,7 @@ end
 @@verbose = false
 @@lame = false
 @@tag = false
+@@copy = false
 
 opts.each {
     | opt, arg |
@@ -93,6 +95,8 @@ opts.each {
         @@verbose = true
     elsif (opt == "--lame")
         @@lame = true
+    elsif (opt == "--copy")
+        @@copy = true
     elsif (opt == "--tag")
         @@tag = true
     end
@@ -136,6 +140,12 @@ if (ARGV.length > 0 && @@find_dir.length > 0)
     exit
 end
 
+if (@@copy && @@lame)
+    puts "Error: --copy and --lame are mutually exclusive!"
+    puts @@usage
+    exit
+end
+
 @@sc = SystemCommand.new
 @@sc.setVerbose(true)
 @@sc.setDryRun(@@dry_run)
@@ -163,7 +173,7 @@ end
 @@temp_files = {}
 @@targets = {}
 
-def join_dirs(sourcen, reldir = nil)
+def make_dirs(sourcen, reldir = nil)
     source = reldir.nil? ? sourcen: AutarkFileUtils::make_relative(sourcen, reldir)
 
     fi = File.split(source)
@@ -212,56 +222,60 @@ def process__(job, source, *args)
     safesource = stripIllegal(source)
     
     base = File.basename(safesource).sub(/(.+)\.[^.]*/, '\1')
-    target_dir = join_dirs(safesource, *args)
-    target = File.join(target_dir, base + (@@lame ? ".mp3" : ".ogg"))
+    target_dir = make_dirs(safesource, *args)
+    target = File.join(target_dir, @@copy ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
     exists = FileTest.exists?(target)
     # the "+ 2" is to compensate for minor time differences on some file systems
     if (not  exists or @@overwrite or (File.stat(target).mtime + 2) < File.stat(source).mtime)
         p [File.stat(target).mtime, File.stat(source).mtime] if exists
         @@thread_mutex.synchronize {@@targets[job] = target}
-        
-        target_tmp = target + ".tmp" # work on a temporary file
-        @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
 
-
-        if (@@lame)
-            mf_args = [source, '--export-tags-to=-']
-            tag_args = []
-            @@sc_silent.execReadPipe("metaflac", mf_args) {
-                |fh|
-                tags = {}
-                fh.each_line {
-                    |line|
-                    line.match(%r{\A(.*?)=(.*)})
-                    tag, value = $1, $2
-                    case tag
-                        when "Title" then tag_args << ['--tt', value]
-                        when "Album" then tag_args << ['--tl', value]
-                        when "Artist" then tag_args << ['--ta', value]
-                        when "Tracknumber" then tag_args << ['--tn', value]
-                    end
-                }
-            }
-
-            lame_args = ['-q', (@@quality || '2'), tag_args, "-", target_tmp]
-            lame_args << '--quiet' if (!@@verbose)
-
-            @@sc.execReadPipe("flac", ["-s", "-c", "-d", source]) {
-                |outpipe|
-                @@sc.execReadPipe("lame", lame_args.flatten, outpipe) {
-                }
-            }
+        if (@@copy)
+            args = [source, target]
+            args.unshift('-v') if (@@verbose)
+            puts_command("cp", args)
         else
-            ogg_args = [source, '-o', target_tmp, '-q', (@@quality || '5')]
-            ogg_args << '--quiet' if (!@@verbose)
+            target_tmp = target + ".tmp" # work on a temporary file
+            @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
+            if (@@lame)
+                mf_args = [source, '--export-tags-to=-']
+                tag_args = []
+                @@sc_silent.execReadPipe("metaflac", mf_args) {
+                    |fh|
+                    tags = {}
+                    fh.each_line {
+                        |line|
+                        line.match(%r{\A(.*?)=(.*)})
+                        tag, value = $1, $2
+                        case tag
+                            when "Title" then tag_args << ['--tt', value]
+                            when "Album" then tag_args << ['--tl', value]
+                            when "Artist" then tag_args << ['--ta', value]
+                            when "Tracknumber" then tag_args << ['--tn', value]
+                        end
+                    }
+                }
 
-            puts_command("oggenc", ogg_args)
+                lame_args = ['-q', (@@quality || '2'), tag_args, "-", target_tmp]
+                lame_args << '--quiet' if (!@@verbose)
+
+                @@sc.execReadPipe("flac", ["-s", "-c", "-d", source]) {
+                    |outpipe|
+                    @@sc.execReadPipe("lame", lame_args.flatten, outpipe) {
+                    }
+                }
+            else
+                ogg_args = [source, '-o', target_tmp, '-q', (@@quality || '5')]
+                ogg_args << '--quiet' if (!@@verbose)
+
+                puts_command("oggenc", ogg_args)
+            end
+            do_touch(source, target_tmp)
+            puts_command("mv", [target_tmp, target]) # now is the time to commit the change
+            @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
         end
-        do_touch(source, target_tmp)
-        puts_command("mv", [target_tmp, target]) # now is the time to commit the change
         
-        @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
         @@thread_mutex.synchronize {
             @@converted += 1
             @@targets.delete(job)
@@ -327,7 +341,7 @@ def process_filename(f, *args)
         staten = File.stat(f)
         next if (staten.directory?)
         if (staten.size > 0)
-#            join_dirs("dummy") if (!@@once) # test that directories are alright
+#            make_dirs("dummy") if (!@@once) # test that directories are alright
             @@once = true
             process(f, *args)
         else
