@@ -204,6 +204,9 @@ def do_touch(reference, target)
     @@sc_silent.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
 end
 
+@@exists = 0
+@@converted = 0
+
 def process__(source, *args)
     safesource = stripIllegal(source)
     
@@ -257,6 +260,10 @@ def process__(source, *args)
         puts_command("mv", [target_tmp, target]) # now is the time to commit the change
         
         @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
+        @@thread_mutex.synchronize {@@converted += 1}
+    else
+        puts "don't overwrite: " + target
+        @@thread_mutex.synchronize {@@exists += 1}
     end
 end
 @@target_count = 0
@@ -406,5 +413,8 @@ failure_count = @@jobs_total - @@jobs_ok;
 if (failure_count > 0)
     puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
 end
-puts "\n#{File.basename($0)}: Successfully converted #{@@jobs_ok} file#{if (@@jobs_ok != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
+if (@@exists > 0)
+    puts "\n#{File.basename($0)}: Not overwritten: #{@@exists}"
+end
+puts "\n#{File.basename($0)}: Converted #{@@converted} file#{if (@@converted != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
 
