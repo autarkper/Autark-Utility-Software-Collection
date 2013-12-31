@@ -17,6 +17,7 @@ options = [
     ["--find-dir", GetoptLong::REQUIRED_ARGUMENT ],
     ["--find-pattern", GetoptLong::REQUIRED_ARGUMENT ],
     ["--find-maxdepth", GetoptLong::REQUIRED_ARGUMENT ],
+    ["--find-mindepth", GetoptLong::REQUIRED_ARGUMENT ],
     ["--find-prune", GetoptLong::REQUIRED_ARGUMENT ],
     ["--flatten", GetoptLong::NO_ARGUMENT ],
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
@@ -54,6 +55,7 @@ end
 @@find_dir = []
 @@find_pattern = '*.flac'
 @@find_maxdepth = nil
+@@find_mindepth = nil
 @@find_prune = nil
 @@flatten = false
 @@quality = nil
@@ -79,6 +81,8 @@ opts.each {
         @@find_pattern = arg
     elsif (opt == "--find-maxdepth")
         @@find_maxdepth = arg
+    elsif (opt == "--find-mindepth")
+        @@find_mindepth = arg
     elsif (opt == "--find-prune")
         @@find_prune = arg
     elsif (opt == "--flatten")
@@ -343,6 +347,9 @@ begin
             find_args = [dir]
             if (!@@find_maxdepth.nil?)
                 find_args.concat(['-maxdepth', @@find_maxdepth])
+            end
+            if (!@@find_mindepth.nil?)
+                find_args.concat(['-mindepth', @@find_mindepth])
             end
             prune_arg = (!@@find_prune.nil?) ? ['-name', @@find_prune, '-prune', '-o'] : []
 
