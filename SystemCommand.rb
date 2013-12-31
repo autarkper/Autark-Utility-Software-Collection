@@ -66,6 +66,8 @@ class SystemCommand
 
     def execReadPipe(cmd, args, stdin = nil, &block)
         printCommand(cmd,args)
+        return 0 if @dry_run
+
         rd, wr = IO.pipe
         pid = fork
         if pid
@@ -98,6 +100,8 @@ class SystemCommand
 
     def execWritePipe(cmd, args, &block)
         printCommand(cmd,args)
+        return 0 if @dry_run
+
         rd, wr = IO.pipe
         pid = fork
         if pid
