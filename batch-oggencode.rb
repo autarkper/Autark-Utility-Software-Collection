@@ -24,6 +24,7 @@ options = [
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--lame", GetoptLong::NO_ARGUMENT ],
     ["--copy", GetoptLong::NO_ARGUMENT ],
+    ["--nostrip-file-name", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ]
 
@@ -64,6 +65,7 @@ end
 @@lame = false
 @@tag = false
 @@copy = false
+@@nostrip = false
 
 opts.each {
     | opt, arg |
@@ -99,6 +101,8 @@ opts.each {
         @@copy = true
     elsif (opt == "--tag")
         @@tag = true
+    elsif (opt == "--nostrip-file-name")
+        @@nostrip = true
     end
 }
 
@@ -217,9 +221,14 @@ end
 
 @@exists = 0
 @@converted = 0
+@@badnames = []
 
 def process__(job, source, *args)
     safesource = stripIllegal(source)
+    if (@@nostrip && source != safesource)
+        @@badnames << source
+        safesource = source
+    end
     
     base = File.basename(safesource).sub(/(.+)\.[^.]*/, '\1')
     target_dir = make_dirs(safesource, *args)
@@ -441,3 +450,6 @@ end
     |failed_job| puts "FAILED: " + @@targets[failed_job]
 }
 
+@@badnames.each {
+    |badname| puts "BAD FILENAME: " + badname
+}
