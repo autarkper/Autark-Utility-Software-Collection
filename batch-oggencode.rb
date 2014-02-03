@@ -163,13 +163,14 @@ end
 
 def stripIllegal(filename)
     stripped = filename.gsub(/["*:<>?\\\|]/) {|ch| '%%%x' % ch[0]}
+    legal = filename == stripped
     stripped.gsub!(/./) {
         |ch| 
         chr = ch[0]
         #p chr
         (chr >= 32 && chr != 127 ) ? ch : ('%%%x' % chr)
     }
-    return stripped
+    return [stripped, legal]
 end
 
 @@created_dir_mutex = Mutex.new
@@ -224,8 +225,9 @@ end
 @@badnames = []
 
 def process__(job, source, *args)
-    safesource = stripIllegal(source)
-    if (@@nostrip && source != safesource)
+    stripped = stripIllegal(source)
+    safesource = stripped[0]
+    if (@@nostrip && !stripped[1])
         @@badnames << source
         safesource = source
     end
@@ -241,7 +243,7 @@ def process__(job, source, *args)
         @@thread_mutex.synchronize {@@targets[job] = target}
 
         if (@@copy)
-            args = [source, target]
+            args = ["-p", source, target]
             args.unshift('-v') if (@@verbose)
             puts_command("cp", args)
         else
@@ -397,7 +399,7 @@ begin
                 base_dir = File.join(base_dir)
             end
 
-            find_args.concat [prune_arg, '-name', @@find_pattern, '-print0']
+            find_args.concat [prune_arg, '-xtype', 'f', '-name', @@find_pattern, '-print0']
             sc.execReadPipe('find', find_args.flatten) {
                 |fh|
                 fh.each_line("\0") {
@@ -446,10 +448,13 @@ failure_count = @@jobs_total - @@jobs_ok;
 if (failure_count > 0)
     puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
 end
+
+STDOUT.flush
+
 @@targets.keys.sort.each {
-    |failed_job| puts "FAILED: " + @@targets[failed_job]
+    |failed_job| STDERR.puts "FAILED: " + @@targets[failed_job]
 }
 
 @@badnames.each {
-    |badname| puts "BAD FILENAME: " + badname
+    |badname| STDERR.puts "BAD FILENAME: " + badname
 }
