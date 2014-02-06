@@ -232,7 +232,7 @@ def process__(job, source, *args)
         safesource = source
     end
     
-    base = File.basename(safesource).sub(/(.+)\.[^.]*/, '\1')
+    base = File.basename(safesource).sub(/(.+)(\.[^.]*)?/, '\1')
     target_dir = make_dirs(safesource, *args)
     target = File.join(target_dir, @@copy ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
