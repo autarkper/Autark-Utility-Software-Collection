@@ -243,9 +243,9 @@ def process__(job, source, *args)
         @@thread_mutex.synchronize {@@targets[job] = target}
 
         if (@@copy)
-            args = ["-p", source, target]
+            args = ["-ptog", source, target]
             args.unshift('-v') if (@@verbose)
-            puts_command("cp", args)
+            puts_command("rsync", args)
         else
             target_tmp = target + ".tmp" # work on a temporary file
             @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
