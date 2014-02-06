@@ -344,20 +344,15 @@ def process(source, *args)
         }
 end
 
-@@once = false
-
 def process_filename(f, *args)
     bExists = FileTest.exists?(f)
     if (bExists)
         staten = File.stat(f)
         next if (staten.directory?)
-        if (staten.size > 0)
-#            make_dirs("dummy") if (!@@once) # test that directories are alright
-            @@once = true
-            process(f, *args)
-        else
+        if (staten.size == 0)
             $stderr.puts "'#{f}': zero-length file"
         end
+        process(f, *args)
     else
         fail "'#{f}': file not found"
     end
