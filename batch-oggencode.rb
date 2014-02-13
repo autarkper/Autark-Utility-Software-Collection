@@ -24,7 +24,7 @@ options = [
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--lame", GetoptLong::NO_ARGUMENT ],
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
-    ["--nostrip-file-name", GetoptLong::NO_ARGUMENT ],
+    ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ]
 
@@ -66,8 +66,8 @@ end
 @@tag = false
 @@copy = false
 @@diff = false
-@@utililty = false
-@@nostrip = false
+@@utililty = nil
+@@nomangle = false
 
 opts.each {
     | opt, arg |
@@ -100,22 +100,13 @@ opts.each {
     elsif (opt == "--lame")
         @@lame = true
     elsif (opt == "--utility")
-        @@utility = true
-        if (arg == "copy")
-            @@copy = true
-        elsif (arg == "diff" || arg == "cmp")
-            @@diff = true
-        else
-            puts "invalid utility: " + arg
-            exit 1
-        end
+        @@utility = arg
     elsif (opt == "--tag")
         @@tag = true
-    elsif (opt == "--nostrip-file-name")
-        @@nostrip = true
+    elsif (opt == "--no-mangle-filename")
+        @@nomangle = true
     end
 }
-
 
 if (@@out_dir.nil? && ARGV.length > 0)
     @@out_dir = ARGV.pop
@@ -131,6 +122,12 @@ usage 2:
 usage 3:
     #{File.basename($0)} [options] --target-dir directory [--find-dir directory-to-find-file-pattern-in] --find-pattern pattern-to-send-to-find
         Example: "#{File.basename($0)} --target-dir /media/iPod/flac --find-dir /tmp/flac --find-pattern '*.flac'"
+
+arguments to --utility:
+    copy    copy the matching files to the target.
+    diff    compare matching files with the same files in the target.
+
+Potentially problematic characters in filenames are converted to a safe target representation; use the --no-mangle-filename option to disable this behavior.
 END_USAGE
 
 if ((ARGV.length < 1 && @@find_dir.length == 0) || @@show_help)
@@ -151,13 +148,25 @@ end
 if (ARGV.length > 0 && @@find_dir.length > 0)
     puts "Error: file list and --find-dir are mutually exclusive!"
     puts @@usage
-    exit
+    exit 1
 end
 
 if (@@utility && @@lame)
-    puts "Error: --copy and --lame are mutually exclusive!"
+    puts "Error: --utility and --lame are mutually exclusive!"
     puts @@usage
-    exit
+    exit 1
+end
+
+if (@@utility != nil)
+    if (@@utility == "copy")
+        @@copy = true
+    elsif (@@utility == "diff" || @@utility == "cmp")
+        @@diff = true
+    else
+        puts "invalid utility: " + @@utility
+        puts @@usage
+        exit 1
+    end
 end
 
 @@sc = SystemCommand.new
@@ -237,14 +246,14 @@ end
 def process__(job, source, *args)
     stripped = stripIllegal(source)
     safesource = stripped[0]
-    if (@@nostrip && !stripped[1])
+    if (@@nomangle && !stripped[1])
         @@badnames << source
         safesource = source
     end
     
     base = File.basename(safesource).sub(/(.+)(\.[^.]*)?/, '\1')
     target_dir = make_dirs(safesource, *args)
-    target = File.join(target_dir, @@utility ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
+    target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
     exists = FileTest.exists?(target)
     # the "+ 2" is to compensate for minor time differences on some file systems
