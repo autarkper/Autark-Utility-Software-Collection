@@ -23,8 +23,7 @@ options = [
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--lame", GetoptLong::NO_ARGUMENT ],
-    ["--copy", GetoptLong::NO_ARGUMENT ],
-    ["--diff", GetoptLong::NO_ARGUMENT ],
+    ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--nostrip-file-name", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ]
@@ -67,6 +66,7 @@ end
 @@tag = false
 @@copy = false
 @@diff = false
+@@utililty = false
 @@nostrip = false
 
 opts.each {
@@ -99,10 +99,16 @@ opts.each {
         @@verbose = true
     elsif (opt == "--lame")
         @@lame = true
-    elsif (opt == "--copy")
-        @@copy = true
-    elsif (opt == "--diff")
-        @@diff = true
+    elsif (opt == "--utility")
+        @@utility = true
+        if (arg == "copy")
+            @@copy = true
+        elsif (arg == "diff" || arg == "cmp")
+            @@diff = true
+        else
+            puts "invalid utility: " + arg
+            exit 1
+        end
     elsif (opt == "--tag")
         @@tag = true
     elsif (opt == "--nostrip-file-name")
@@ -148,7 +154,7 @@ if (ARGV.length > 0 && @@find_dir.length > 0)
     exit
 end
 
-if (@@copy && @@lame)
+if (@@utility && @@lame)
     puts "Error: --copy and --lame are mutually exclusive!"
     puts @@usage
     exit
@@ -238,7 +244,7 @@ def process__(job, source, *args)
     
     base = File.basename(safesource).sub(/(.+)(\.[^.]*)?/, '\1')
     target_dir = make_dirs(safesource, *args)
-    target = File.join(target_dir, (@@diff or @@copy) ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
+    target = File.join(target_dir, @@utility ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
     exists = FileTest.exists?(target)
     # the "+ 2" is to compensate for minor time differences on some file systems
