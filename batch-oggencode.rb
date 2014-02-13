@@ -395,7 +395,9 @@ begin
             end
 
             find_args.concat [prune_arg, '-xtype', 'f', '-name', @@find_pattern, '-print0']
-            sc.execReadPipe('find', find_args.flatten) {
+            sc2 = sc.dup
+            sc2.failSoft(true) # we want to handle all files we can, even though some directories may not be readable
+            sc2.execReadPipe('find', find_args.flatten) {
                 |fh|
                 fh.each_line("\0") {
                     |f|
