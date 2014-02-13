@@ -24,6 +24,7 @@ options = [
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--lame", GetoptLong::NO_ARGUMENT ],
     ["--copy", GetoptLong::NO_ARGUMENT ],
+    ["--diff", GetoptLong::NO_ARGUMENT ],
     ["--nostrip-file-name", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ]
@@ -65,6 +66,7 @@ end
 @@lame = false
 @@tag = false
 @@copy = false
+@@diff = false
 @@nostrip = false
 
 opts.each {
@@ -99,6 +101,8 @@ opts.each {
         @@lame = true
     elsif (opt == "--copy")
         @@copy = true
+    elsif (opt == "--diff")
+        @@diff = true
     elsif (opt == "--tag")
         @@tag = true
     elsif (opt == "--nostrip-file-name")
@@ -234,15 +238,19 @@ def process__(job, source, *args)
     
     base = File.basename(safesource).sub(/(.+)(\.[^.]*)?/, '\1')
     target_dir = make_dirs(safesource, *args)
-    target = File.join(target_dir, @@copy ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
+    target = File.join(target_dir, (@@diff or @@copy) ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
     exists = FileTest.exists?(target)
     # the "+ 2" is to compensate for minor time differences on some file systems
-    if (not  exists or @@overwrite or (File.stat(target).mtime + 2) < File.stat(source).mtime)
+    if (not exists or (@@overwrite or @@diff) or (File.stat(target).mtime + 2) < File.stat(source).mtime)
         p [File.stat(target).mtime, File.stat(source).mtime] if exists
         @@thread_mutex.synchronize {@@targets[job] = target}
 
-        if (@@copy)
+        if (@@diff)
+            args = [source, target]
+            # args.unshift('-v') if (@@verbose)
+            puts_command("cmp", args)
+        elsif (@@copy)
             args = ["-ptog", source, target]
             args.unshift('-v') if (@@verbose)
             puts_command("rsync", args)
