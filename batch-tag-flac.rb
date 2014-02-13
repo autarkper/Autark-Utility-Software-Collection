@@ -120,7 +120,7 @@ def recurse(entry__, staten)
         else
             number, artisten, song = nil, nil, nil
 
-            if (filexx.match(%r/(\A(\d|-)+)\s*(.*)\.flac/))
+            if (filexx.match(%r/(\A(\d|-)+)?\s*(.*)\.flac/))
                 number, bulk = $1, $3
                 if (bulk.match(/(.+?)\s+-\s+(.+)/))
                     if (@@song_before_artist) then song, artisten =  $1, $2 else artisten, song = $1 , $2 end
