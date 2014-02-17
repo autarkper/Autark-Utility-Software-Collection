@@ -251,7 +251,9 @@ def process__(job, source, *args)
         safesource = source
     end
     
-    base = File.basename(safesource).sub(/(.+)(\.[^.]*)?/, '\1')
+    File.basename(safesource).match(/(.+)(\.[^.]*)/)
+    base = $1
+    extension = $2
     target_dir = make_dirs(safesource, *args)
     target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
     
