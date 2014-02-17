@@ -22,7 +22,7 @@ options = [
     ["--flatten", GetoptLong::NO_ARGUMENT ],
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
-    ["--lame", GetoptLong::NO_ARGUMENT ],
+    ["--mp3", "--lame", GetoptLong::NO_ARGUMENT ],
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
@@ -97,7 +97,7 @@ opts.each {
         @@quality = arg
     elsif (opt == "--verbose")
         @@verbose = true
-    elsif (opt == "--lame")
+    elsif (opt == "--mp3")
         @@lame = true
     elsif (opt == "--utility")
         @@utility = arg
