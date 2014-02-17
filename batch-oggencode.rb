@@ -66,7 +66,7 @@ end
 @@tag = false
 @@copy = false
 @@diff = false
-@@utililty = nil
+@@utility = nil
 @@nomangle = false
 
 opts.each {
@@ -151,7 +151,7 @@ if (ARGV.length > 0 && @@find_dir.length > 0)
     exit 1
 end
 
-if (@@utility && @@lame)
+if (@@utility != nil && @@lame)
     puts "Error: --utility and --lame are mutually exclusive!"
     puts @@usage
     exit 1
