@@ -262,9 +262,16 @@ def process__(job, source, *args)
     target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
     
     exists = FileTest.exists?(target)
-    # the "+ 2" is to compensate for minor time differences on some file systems
-    if (not exists or (@@overwrite or @@diff) or (File.stat(target).mtime + 2) < File.stat(source).mtime)
-        p [File.stat(target).mtime, File.stat(source).mtime] if exists
+    instat = File.stat(source)
+    outstat = exists ? File.stat(target) : nil
+    overwrite = @@overwrite
+    if (exists && (instat.ino == outstat.ino))
+        STDERR.puts("input and output files are the same file")
+        overwrite = false
+    end
+
+    if (not exists or (overwrite or @@diff) or (outstat.mtime + 2) < instat.mtime)     # the "+ 2" is to compensate for minor time differences on some file systems
+        p [outstat.mtime, instat.mtime] if exists
         @@thread_mutex.synchronize {@@targets[job] = target}
 
         if (@@diff)
