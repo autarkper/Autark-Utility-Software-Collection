@@ -24,6 +24,7 @@ options = [
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--mp3", "--lame", GetoptLong::NO_ARGUMENT ],
     ["--toflac", GetoptLong::NO_ARGUMENT ],
+    ["--delete-after", GetoptLong::NO_ARGUMENT ],
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
@@ -70,6 +71,7 @@ end
 @@utility = nil
 @@nomangle = false
 @@toflac = false
+@@delete = false
 
 opts.each {
     | opt, arg |
@@ -103,6 +105,8 @@ opts.each {
         @@lame = true
     elsif (opt == "--toflac")
         @@toflac = true
+    elsif (opt == "--delete-after")
+        @@delete = true
     elsif (opt == "--utility")
         @@utility = arg
     elsif (opt == "--tag")
@@ -274,6 +278,7 @@ def process__(job, source, *args)
         p [outstat.mtime, instat.mtime] if exists
         @@thread_mutex.synchronize {@@targets[job] = target}
 
+        can_delete = false
         if (@@diff)
             args = [source, target]
             puts_command("cmp", args)
@@ -281,6 +286,7 @@ def process__(job, source, *args)
             args = ["-ptog", source, target]
             args.unshift('-v') if (@@verbose)
             puts_command("rsync", args)
+            can_delete = true
         else
             target_tmp = target + ".tmp" # work on a temporary file
             @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
@@ -315,6 +321,7 @@ def process__(job, source, *args)
                 args = [source, '-o', target_tmp, '-s', ('-' + (@@quality || '-best'))]
 
                 puts_command("flac", args)
+                can_delete = true
             else
                 ogg_args = [source, '-o', target_tmp, '-q', (@@quality || '5')]
                 ogg_args << '--quiet' if (!@@verbose)
@@ -324,6 +331,9 @@ def process__(job, source, *args)
             do_touch(source, target_tmp)
             puts_command("mv", [target_tmp, target]) # now is the time to commit the change
             @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
+        end
+        if (@@delete && can_delete)
+            puts_command("rm", [source])
         end
         
         @@thread_mutex.synchronize {
@@ -453,6 +463,15 @@ begin
         puts "\nNo files matching search criteria"
         return
     end
+
+    if (@@delete)
+        puts 'Please confirm deletion of source files after processing by typing "Delete"'
+        input = gets.chomp
+        if (input != "Delete")
+            exit 0
+        end
+    end
+
     @@target_count = file_list.size
     file_list.each {
         |f|
