@@ -449,6 +449,10 @@ begin
         file_list = ARGV
     end
 
+    if (file_list.size <= 0)
+        puts "\nNo files matching search criteria"
+        return
+    end
     @@target_count = file_list.size
     file_list.each {
         |f|
