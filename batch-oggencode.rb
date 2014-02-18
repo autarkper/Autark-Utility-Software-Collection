@@ -23,6 +23,7 @@ options = [
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--mp3", "--lame", GetoptLong::NO_ARGUMENT ],
+    ["--toflac", GetoptLong::NO_ARGUMENT ],
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
@@ -68,6 +69,7 @@ end
 @@diff = false
 @@utility = nil
 @@nomangle = false
+@@toflac = false
 
 opts.each {
     | opt, arg |
@@ -99,6 +101,8 @@ opts.each {
         @@verbose = true
     elsif (opt == "--mp3")
         @@lame = true
+    elsif (opt == "--toflac")
+        @@toflac = true
     elsif (opt == "--utility")
         @@utility = arg
     elsif (opt == "--tag")
@@ -255,7 +259,7 @@ def process__(job, source, *args)
     base = $1
     extension = $2
     target_dir = make_dirs(safesource, *args)
-    target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : ".ogg"))
+    target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
     
     exists = FileTest.exists?(target)
     # the "+ 2" is to compensate for minor time differences on some file systems
@@ -265,7 +269,6 @@ def process__(job, source, *args)
 
         if (@@diff)
             args = [source, target]
-            # args.unshift('-v') if (@@verbose)
             puts_command("cmp", args)
         elsif (@@copy)
             args = ["-ptog", source, target]
@@ -301,6 +304,10 @@ def process__(job, source, *args)
                     @@sc.execReadPipe("lame", lame_args.flatten, outpipe) {
                     }
                 }
+            elsif (@@toflac)
+                args = [source, '-o', target_tmp, '-s', ('-' + (@@quality || '-best'))]
+
+                puts_command("flac", args)
             else
                 ogg_args = [source, '-o', target_tmp, '-q', (@@quality || '5')]
                 ogg_args << '--quiet' if (!@@verbose)
