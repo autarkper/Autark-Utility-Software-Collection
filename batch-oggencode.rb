@@ -116,8 +116,14 @@ opts.each {
     end
 }
 
-if (@@out_dir.nil? && ARGV.length > 0)
-    @@out_dir = ARGV.pop
+if (@@out_dir.nil?)
+    if (ARGV.length > 0)
+        @@out_dir = ARGV.pop
+    end
+    if (@@out_dir.nil?)
+        puts "#{File.basename($0)}: no target directory given, use --target-dir"
+        exit
+    end
 end
 
 @@usage = <<END_USAGE
@@ -462,6 +468,8 @@ begin
     if (file_list.size <= 0)
         puts "\nNo files matching search criteria"
         return
+    else
+        puts("\nNumber of files found: #{file_list.size}")
     end
 
     if (@@delete)
