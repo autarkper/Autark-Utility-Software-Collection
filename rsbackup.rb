@@ -28,6 +28,7 @@ options = {
     "--perms" => 1,
     "--owner" => 1,
     "--group" => 1,
+    "--stats" => 1,
 }
 require 'getoptlong'
 
