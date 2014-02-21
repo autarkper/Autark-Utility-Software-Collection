@@ -10,5 +10,5 @@ HEADERS += mainwindow.h \
     processoutputdlg.h
 FORMS += mainwindow.ui \
     processoutputdlg.ui
-LIBS += -lboost_filesystem-mt \
-    -lboost_regex-mt
+LIBS += -lboost_filesystem \
+    -lboost_regex
