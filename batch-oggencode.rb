@@ -473,6 +473,10 @@ begin
     end
 
     if (@@delete)
+        file_list.each {
+            |f|
+            puts f
+        }
         puts 'Please confirm deletion of source files after processing by typing "Delete"'
         input = gets.chomp
         if (input != "Delete")
