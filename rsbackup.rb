@@ -29,6 +29,7 @@ options = {
     "--owner" => 1,
     "--group" => 1,
     "--stats" => 1,
+    "--hard-links" => 1,
 }
 require 'getoptlong'
 
