@@ -10,6 +10,7 @@ require 'getoptlong'
 options = [
     ["--dry-run", GetoptLong::NO_ARGUMENT ],
     ["--overwrite", GetoptLong::NO_ARGUMENT ],
+    ["--keep", GetoptLong::NO_ARGUMENT ],
     ["--song-before-artist", GetoptLong::NO_ARGUMENT ],
     ["--artist-before-song", GetoptLong::NO_ARGUMENT ],
     ]
@@ -20,6 +21,7 @@ opts.set_options(*options)
 @@dry_run = false
 @@overwrite = false
 @@song_before_artist = false
+@@keep = false
 
 opts.each {
     | opt, arg |
@@ -27,6 +29,8 @@ opts.each {
         @@dry_run = true
     elsif (opt == "--overwrite")
         @@overwrite = true
+    elsif (opt == "--keep")
+        @@keep = true
     elsif (opt == "--song-before-artist")
         @@song_before_artist = true
     elsif (opt == "--artist-before-song")
@@ -45,10 +49,9 @@ opts.each {
 @@error = []
 
 def do_it(path, data)
-    if (@@overwrite)
-        @@sysc.safeExec('metaflac', [path, '--remove', '--block-type=VORBIS_COMMENT', '--preserve-modtime'])
-    else
-        comments = 0
+    comments = 0
+    if (!@@overwrite)
+        komments = {}
         @@sysc_ro.execReadPipe('metaflac', [path, '--list', '--block-type=VORBIS_COMMENT']) {
             |fd|
             fd.each_line {
@@ -57,19 +60,34 @@ def do_it(path, data)
                 if line.match(/\s*comments:\s*(\d+)/)
                     comments = $1.to_i
                 end
+                if line.match(/\s*comment\[\d+\]:\s*(.+)/)
+                    if $1.match(/(.*)?=(.*)/)
+                        komments[$1]=$2
+                    end
+                end
             }
         }
         if (comments > 0)
-            @@has_comment.push("already #{comments} comments in '#{path}'")
-            return
+            if (komments == data)
+                @@has_comment.push("all #{comments} tags already in '#{path}':")
+                @@has_comment.push(komments.inspect)
+                return
+            elsif (@keep)
+                @@has_comment.push("keep #{comments} old tags in '#{path}':")
+                @@has_comment.push(komments.inspect)
+                return
+            end
         end
     end
 
-    puts( (@@dry_run ? '#' : '') + "metaflac " + path + " [" + data.join(", ") + "]" )
+    entries = []
+    data.keys.each {|key| entries << (key + "=" + data[key])}
+    puts( (@@dry_run ? '#' : '') + "metaflac " + path + " [" + entries.join(", ") + "]" )
+
     if (!@@dry_run)
-        @@sysc.execWritePipe('metaflac', [path, '--import-tags-from=-', '--preserve-modtime']) {
+        @@sysc.execWritePipe('metaflac', [path, '--remove-all-tags', '--import-tags-from=-', '--preserve-modtime']) {
             |fd|
-            data.each {|line| fd.puts(line)}
+            entries.each {|entry| fd.puts(entry)}
         }
     end
 end
@@ -136,9 +154,11 @@ def recurse(entry__, staten)
                 track += 1
                 artiste = (artisten || artist)
                 song.gsub!(slash_re, '/')
-                data = ["Title=#{song}", "Tracknumber=#{track.to_s}"]
-                data.push("Artist=#{artiste.gsub(slash_re, '/')}") if (artiste != nil)
-                data.push("Album=#{album}") if (album != nil)
+                data = {}
+                data["Title"] = song
+                data["Tracknumber"] = track.to_s
+                data["Artist"] = artiste.gsub(slash_re, '/') if (artiste != nil)
+                data["Album"]= album if (album != nil)
                 do_it(File.join(entry__,filexx), data)
             end
        end
