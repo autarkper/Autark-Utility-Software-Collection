@@ -36,6 +36,7 @@ opts.each {
 
 @@sysc = SystemCommand.new
 @@sysc.setVerbose(false)
+@@sysc_ro = @@sysc.dup
 @@sysc.setDryRun(@@dry_run)
 
 @@has_comment = []
@@ -48,7 +49,7 @@ def do_it(path, data)
         @@sysc.safeExec('metaflac', [path, '--remove', '--block-type=VORBIS_COMMENT', '--preserve-modtime'])
     else
         comments = 0
-        @@sysc.execReadPipe('metaflac', [path, '--list', '--block-type=VORBIS_COMMENT']) {
+        @@sysc_ro.execReadPipe('metaflac', [path, '--list', '--block-type=VORBIS_COMMENT']) {
             |fd|
             fd.each_line {
                 |line|
