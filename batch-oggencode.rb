@@ -475,11 +475,11 @@ begin
     if (@@delete)
         file_list.each {
             |f|
-            puts f
+            puts f[0].inspect
         }
-        puts 'Please confirm deletion of source files after processing by typing "Delete"'
-        input = gets.chomp
-        if (input != "Delete")
+        puts "\nPlease confirm deletion of source files after processing by typing \"Delete\""
+        input = STDIN.gets.chomp
+        if (input.chomp != "Delete")
             exit 0
         end
     end
