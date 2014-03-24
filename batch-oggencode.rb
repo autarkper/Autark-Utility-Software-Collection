@@ -117,8 +117,11 @@ opts.each {
 }
 
 if (@@out_dir.nil?)
-    if (ARGV.length > 0)
-        @@out_dir = ARGV.pop
+    begin 
+        if (ARGV.length > 0 && File.stat(ARGV[ARGV.length - 1]).directory?)
+            @@out_dir = ARGV.pop
+        end
+    rescue
     end
     if (@@out_dir.nil?)
         puts "#{File.basename($0)}: no target directory given, use --target-dir"
@@ -420,7 +423,11 @@ end
 begin
     file_list = nil
 
-    if (@@find_pattern.length > 0)
+    if (ARGV.length > 0)
+        file_list = ARGV.collect {
+            |f| [f, '.']
+        }
+    elsif (@@find_pattern.length > 0)
         sc = SystemCommand.new
         sc.setVerbose
         
@@ -462,7 +469,7 @@ begin
             }
         }
     else
-        file_list = ARGV
+        puts "\nArgument/option mis-match"
     end
 
     if (file_list.size <= 0)
