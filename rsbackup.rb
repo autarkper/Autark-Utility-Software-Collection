@@ -12,6 +12,7 @@ options:
         --checksum: perform a checksum comparison (very slow!)
         --batch: don't prompt for OK
         --detailed: invoke rsync with --itemize-changes
+        --no-backup: don't save backup copies of old versions and deleted files
         --help: show this help text
 ENDS
 
@@ -30,6 +31,13 @@ options = {
     "--group" => 1,
     "--stats" => 1,
     "--hard-links" => 1,
+    "-F" => 1,
+    "-h" => 1,
+    "-av" => 1,
+    "--delete" => 1,
+    "--delete-excluded" => 1,
+    "--force" => 1,
+    "--hard-links" => 1,
 }
 require 'getoptlong'
 
@@ -37,6 +45,7 @@ opts = GetoptLong.new(
     [ "--help", "-h", GetoptLong::NO_ARGUMENT ],
     [ "--wet-run", GetoptLong::NO_ARGUMENT ],
     [ "--batch", GetoptLong::NO_ARGUMENT ],
+    [ "--no-backup", GetoptLong::NO_ARGUMENT ],
     [ "--checksum", GetoptLong::NO_ARGUMENT ],
     [ "--target", GetoptLong::REQUIRED_ARGUMENT],
     [ "--detailed", GetoptLong::NO_ARGUMENT]
@@ -46,6 +55,7 @@ opts = GetoptLong.new(
 @@bDryRun = true
 @@logfile = ""
 @@target = nil
+@@dobackup = true
 
 opts.each {
     | opt, arg |
@@ -59,6 +69,8 @@ opts.each {
         options.delete( "--dry-run" )
     elsif (opt == "--target")
         @@target = arg
+    elsif (opt == "--no-backup")
+        @@dobackup = false
     elsif (opt == "--checksum")
         options["--checksum"] = 1
     elsif (opt == "--detailed")
@@ -88,7 +100,13 @@ if (ARGV.length < 1)
 end
 
 if (@@bDryRun)
-    puts "\nDRY RUN! To perform a real backup, run with --wet-run."
+    puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
+elsif (!@@dobackup)
+    puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
+    input = STDIN.gets.chomp
+    if (input != "No backup")
+        exit 0
+    end
 end
 
 def execute(command, args)
@@ -103,7 +121,7 @@ def execute(command, args)
     output.call "\nTarget directory: " + @@hardtarget
     output.call "Backup directory: " + @@backup_dir
     output.call "Log file: " + @@logfile
-    output.call "Command:\nrsync" + args.join( ' ' )
+    output.call "Command:\nrsync " + args.join( ' ' )
     if (!@@bBatchMode && STDERR.isatty)
         STDOUT.flush
         STDERR.puts "\nOK? (Press CTRL+C to abort.)"
@@ -183,20 +201,19 @@ ARGV.each {
     end
     
     base = [
-            "-F",
-            "-h",
-            "-av",
-            "--backup",
-            "--delete",
-            "--delete-excluded",
-            "--force",
-            "--hard-links",
-            "--backup-dir=" + @@backup_dir,
-    ].compact + excludes.collect {
+    ]
+    if (@@dobackup)
+        base  = base + [
+                "--backup",
+                "--backup-dir=" + @@backup_dir,
+        ]
+    end
+
+    base = base + excludes.collect {
         |a|
         '--exclude=' + a
     }
-    
+
     dirs = [
             dir,
             @@hardtarget
