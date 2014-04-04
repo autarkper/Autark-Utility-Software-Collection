@@ -38,12 +38,20 @@ opts.each {
 
 @@myprog = File.basename($0)
 
-if (ARGV.length < 1 || @@show_help || @@new_sample_rate.nil?)
+if (ARGV.length < 1 || @@show_help || @@new_sample_rate.nil? || @@new_sample_rate == 0)
     puts "Usage: #{@@myprog} [--new-sample-rate rate-in-hz] file-list"
     exit(1)
 end
 
 @@failures = 0
+
+if (@@new_sample_rate < 100)
+    if (@@new_sample_rate == 44)
+        @@new_sample_rate = 44100
+    else
+        @@new_sample_rate = @@new_sample_rate * 1000
+    end
+end
 
 ARGV.each {
     |file|
