@@ -30,7 +30,6 @@ options = {
     "--owner" => 1,
     "--group" => 1,
     "--stats" => 1,
-    "--hard-links" => 1,
     "-F" => 1,
     "-h" => 1,
     "-av" => 1,
