@@ -147,22 +147,32 @@ def execute(command, args)
     sh = SystemCommand.new
     sh.setVerbose(false)
     sh.failSoft(true)
+
+    rd, wr = IO.pipe
+    STDERR.reopen(wr)
+
+    poll_stderr = proc {
+        while ((fhs = select([rd], nil, nil, 0)) != nil && fhs[0] != nil)
+            line2 = rd.gets()
+            output.call("STDERR: " + line2)
+        end
+    }
+
     ret = sh.execReadPipe(command, args) {
         | pipe |
         begin
             output.call "Run rsync .................................................."
             pipe.each_line {
-                |line| 
-                begin
-                    output.call("    " + line )
-                rescue Exception => e
-                    STDERR.puts line
-                end
+                |line|
+                output.call("    " + line )
+                poll_stderr.call()
             }
             output.call "...................................................rsync done"            
-        rescue SignalException => e
+        rescue Exception => e
+            puts e
         end
     }
+    poll_stderr.call()
     if (ret != 0) then output.call("\nrsync returned non-zero: " + ret.to_s) end
 
     logfileh.close()
