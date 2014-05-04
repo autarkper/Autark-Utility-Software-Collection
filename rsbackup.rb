@@ -109,13 +109,25 @@ elsif (!@@dobackup)
 end
 
 def execute(command, args)
-    loglines = []
     
+    logfileh = nil
+    if (!@@bDryRun)
+        begin
+            logfileh = File.open( @@logfile, "w" )
+        rescue Exception => e
+            STDERR.puts('ERROR: could not create log file, "' + e + '"')
+            exit(1)
+        end
+    end
+
     output = proc {
         |line|
-        loglines << line
         STDOUT.puts line
         STDOUT.flush
+        if (logfileh != nil)
+            logfileh.puts(line)
+            logfileh.flush()
+        end
         }
     output.call "\nTarget directory: " + @@hardtarget
     output.call "Backup directory: " + @@backup_dir
@@ -153,12 +165,7 @@ def execute(command, args)
     }
     if (ret != 0) then output.call("\nrsync returned non-zero: " + ret.to_s) end
 
-    if (!@@bDryRun)
-        File.open( @@logfile, "w" ) {
-            |logfileh|
-            logfileh.puts( loglines)
-        }
-    end
+    logfileh.close()
 end
 
 dirs = {}
