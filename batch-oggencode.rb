@@ -228,7 +228,7 @@ def make_dirs(sourcen, reldir = nil)
         cached_dir = @@created_dirs[source_dir]
         if (cached_dir != nil) then return cached_dir end
 
-        target_dir = File.join(@@out_dir, source_dir)
+        target_dir = File.join(@@out_dir, AutarkFileUtils::make_relative(@@out_dir,source_dir))
 
         if (!FileTest.exists?(target_dir))
             @@sc_silent.safeExec("mkdir", ['-p', target_dir])
@@ -273,7 +273,8 @@ def process__(job, source, *args)
     extension = $2
     target_dir = make_dirs(safesource, *args)
     target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
-    
+    target = File.expand_path(target)
+
     exists = FileTest.exists?(target)
     instat = File.stat(source)
     outstat = exists ? File.stat(target) : nil
