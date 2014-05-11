@@ -251,9 +251,11 @@ def make_dirs(sourcen, reldir = nil)
     }
 end
 
+@@sc_touch = @@sc_silent.dup
+@@sc_touch.failSoft(true)
 
 def do_touch(reference, target)
-    @@sc_silent.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
+    @@sc_touch.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
 end
 
 @@exists = 0
@@ -328,7 +330,7 @@ def process__(job, source, *args)
                     }
                 }
             elsif (@@toflac)
-                args = [source, '-o', target_tmp, '-s', ('-' + (@@quality || '-best'))]
+                args = [source, '-f', '--preserve-modtime', '-o', target_tmp, '-s', ('-' + (@@quality || '-best'))]
 
                 puts_command("flac", args)
                 can_delete = true
