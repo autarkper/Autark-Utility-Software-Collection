@@ -28,6 +28,7 @@ options = [
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
+    ["--in-place", "--inplace", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -72,6 +73,7 @@ end
 @@nomangle = false
 @@toflac = false
 @@delete = false
+@@inplace = false
 
 opts.each {
     | opt, arg |
@@ -79,6 +81,8 @@ opts.each {
         @@show_help = true
     elsif (opt == "--target-dir")
         @@out_dir = arg
+    elsif (opt == "--in-place")
+        @@inplace = true
     elsif (opt == "--dry-run")
         @@dry_run = true
     elsif (opt == "--overwrite")
@@ -116,6 +120,10 @@ opts.each {
     end
 }
 
+if (!@@out_dir.nil? && @@inplace)
+    puts "#{File.basename($0)}: --target-dir and --in-place are mutually exclusive"
+    exit
+end
 if (@@out_dir.nil?)
     begin 
         if (ARGV.length > 0 && File.stat(ARGV[ARGV.length - 1]).directory?)
@@ -123,8 +131,8 @@ if (@@out_dir.nil?)
         end
     rescue
     end
-    if (@@out_dir.nil?)
-        puts "#{File.basename($0)}: no target directory given, use --target-dir"
+    if (@@out_dir.nil? && !@@inplace)
+        puts "#{File.basename($0)}: no target directory given, use --target-dir or --in-place"
         exit
     end
 end
@@ -228,7 +236,8 @@ def make_dirs(sourcen, reldir = nil)
         cached_dir = @@created_dirs[source_dir]
         if (cached_dir != nil) then return cached_dir end
 
-        target_dir = File.join(@@out_dir, AutarkFileUtils::make_relative(@@out_dir,source_dir))
+        relative = AutarkFileUtils::make_relative(@@out_dir,source_dir)
+        target_dir = relative[0..0] == '/' ? relative : File.join(@@out_dir, relative)
 
         if (!FileTest.exists?(target_dir))
             @@sc_silent.safeExec("mkdir", ['-p', target_dir])
@@ -270,10 +279,15 @@ def process__(job, source, *args)
         safesource = source
     end
     
+    if (@@inplace)
+        @@out_dir = File.split(source)[0]
+    end
+
     File.basename(safesource).match(/(.+)(\.[^.]*)/)
     base = $1
     extension = $2
     target_dir = make_dirs(safesource, *args)
+
     target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
     target = File.expand_path(target)
 
