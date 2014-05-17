@@ -13,6 +13,7 @@ options = [
     ["--keep", GetoptLong::NO_ARGUMENT ],
     ["--song-before-artist", GetoptLong::NO_ARGUMENT ],
     ["--artist-before-song", GetoptLong::NO_ARGUMENT ],
+    ["--verbose", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -22,6 +23,7 @@ opts.set_options(*options)
 @@overwrite = false
 @@song_before_artist = false
 @@keep = false
+@@verbose = false
 
 opts.each {
     | opt, arg |
@@ -35,6 +37,8 @@ opts.each {
         @@song_before_artist = true
     elsif (opt == "--artist-before-song")
         @@song_before_artist = false
+    elsif (opt == "--verbose")
+        @@verbose = true
     end
 }
 
@@ -69,8 +73,10 @@ def do_it(path, data)
         }
         if (comments > 0)
             if (komments == data)
-                @@has_comment.push("all #{comments} tags already in '#{path}':")
-                @@has_comment.push(komments.inspect)
+                if (@@verbose)
+                    @@has_comment.push("all #{comments} tags already in '#{path}':")
+                    @@has_comment.push(komments.inspect)
+                end
                 return
             elsif (@@keep)
                 @@has_comment.push("keep #{comments} old tags in '#{path}':")
