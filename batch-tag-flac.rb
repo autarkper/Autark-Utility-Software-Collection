@@ -72,16 +72,26 @@ def do_it(path, data)
             }
         }
         if (comments > 0)
-            if (komments == data)
-                if (@@verbose)
-                    @@has_comment.push("all #{comments} tags already in '#{path}':")
-                    @@has_comment.push(komments.inspect)
+            verbose = @@verbose
+            begin
+                if (komments == data)
+                    if (@@verbose)
+                        puts("keep unchanged tags for '#{path}':")
+                    end
+                    return
+                else
+                    if (@@keep)
+                        puts("keep old tags for '#{path}':")
+                        verbose = true
+                        return
+                    end
+                    verbose = true
+                    puts("old tags for '#{path}':")
                 end
-                return
-            elsif (@@keep)
-                @@has_comment.push("keep #{comments} old tags in '#{path}':")
-                @@has_comment.push(komments.inspect)
-                return
+            ensure
+                if (verbose)
+                    puts(komments.inspect)
+                end
             end
         end
     end
