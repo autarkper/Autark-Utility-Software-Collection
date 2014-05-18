@@ -110,6 +110,13 @@ end
 
 @@seen = {}
 
+def demangle(string)
+    # "%3f" -> "?", etc
+    string.gsub(/%((?:[0-9a-f]){1,2})/) {
+        $1.hex.chr
+    }
+end
+
 def recurse(entry__, staten)
     entry__ = File.expand_path(entry__)
     return if (!staten.directory?)
@@ -117,7 +124,7 @@ def recurse(entry__, staten)
     return if (@@seen.has_key?(staten.ino))
     @@seen[staten.ino] = 1
     
-    entry = entry__.split(%r|/|).pop
+    entry = demangle(entry__.split(%r|/|).pop)
     ok = true
 
     begin
@@ -155,14 +162,16 @@ def recurse(entry__, staten)
         else
             number, artisten, song = nil, nil, nil
 
-            if (filexx.match(%r/(\A(\d|-)+)?\.?\s*(.*)\.flac/))
+            filexxx = demangle(filexx)
+
+            if (filexxx.match(%r/(\A(\d|-)+)?\.?\s*(.*)\.flac/))
                 number, bulk = $1, $3
                 if (bulk.match(/(.+?)\s+-\s+(.+)/))
                     if (@@song_before_artist) then song, artisten =  $1, $2 else artisten, song = $1 , $2 end
                 else
                     artisten, song = nil, bulk
                 end
-            elsif (filexx.match(%r/(.*?)\.flac/))
+            elsif (filexxx.match(%r/(.*?)\.flac/))
                 song = $1
             end
 
