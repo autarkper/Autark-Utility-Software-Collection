@@ -181,7 +181,7 @@ def recurse(entry__, staten)
                 song.gsub!(slash_re, '/')
                 data = {}
                 data["Title"] = song
-                data["Tracknumber"] = track.to_s
+                data["Tracknumber"] = track.to_s unless number.nil?
                 data["Artist"] = artiste.gsub(slash_re, '/') if (artiste != nil)
                 data["Album"]= album if (album != nil)
                 do_it(File.join(entry__,filexx), data)
