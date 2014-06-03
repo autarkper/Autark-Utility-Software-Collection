@@ -14,6 +14,7 @@ options = [
     ["--song-before-artist", GetoptLong::NO_ARGUMENT ],
     ["--artist-before-song", GetoptLong::NO_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
+    ["--no-recurse", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -24,6 +25,7 @@ opts.set_options(*options)
 @@song_before_artist = false
 @@keep = false
 @@verbose = false
+@@recurse = true
 
 opts.each {
     | opt, arg |
@@ -39,6 +41,8 @@ opts.each {
         @@song_before_artist = false
     elsif (opt == "--verbose")
         @@verbose = true
+    elsif (opt == "--no-recurse")
+        @@recurse = false
     end
 }
 
@@ -158,7 +162,9 @@ def recurse(entry__, staten)
         thisentry = File.join(entry__, filexx)
         staten2 = File.lstat(thisentry)
         if (staten2.directory?)
-            recurse(thisentry, staten2)
+            if (@@recurse)
+                recurse(thisentry, staten2)
+            end
         else
             number, artisten, song = nil, nil, nil
 
