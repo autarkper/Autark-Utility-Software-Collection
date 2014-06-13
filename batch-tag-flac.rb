@@ -110,6 +110,7 @@ def do_it(path, data)
             entries.each {|entry| fd.puts(entry)}
         }
     end
+    @@sysc.safeExec('touch', ['--reference', path, '-d', '+5 seconds', path])
 end
 
 @@seen = {}
