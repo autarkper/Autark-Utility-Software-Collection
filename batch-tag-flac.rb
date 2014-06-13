@@ -69,7 +69,7 @@ def do_it(path, data)
                     comments = $1.to_i
                 end
                 if line.match(/\s*comment\[\d+\]:\s*(.+)/)
-                    if $1.match(/(.*)?=(.*)/)
+                    if $1.match(/(.*?)?=(.*)/)
                         komments[$1]=$2
                     end
                 end
