@@ -23,7 +23,7 @@ options = [
     ["--quality", GetoptLong::REQUIRED_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--mp3", "--lame", GetoptLong::NO_ARGUMENT ],
-    ["--toflac", GetoptLong::NO_ARGUMENT ],
+    ["--toflac", "--to-flac", GetoptLong::NO_ARGUMENT ],
     ["--delete-after", GetoptLong::NO_ARGUMENT ],
     ["--utility", GetoptLong::REQUIRED_ARGUMENT ],
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
