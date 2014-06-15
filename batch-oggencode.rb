@@ -29,6 +29,7 @@ options = [
     ["--no-mangle-filename", GetoptLong::NO_ARGUMENT ],
     ["--tag", GetoptLong::NO_ARGUMENT ],
     ["--in-place", "--inplace", GetoptLong::NO_ARGUMENT ],
+    ["--verify-flac", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -74,6 +75,7 @@ end
 @@toflac = false
 @@delete = false
 @@inplace = false
+@@verify_flac = false
 
 opts.each {
     | opt, arg |
@@ -115,6 +117,8 @@ opts.each {
         @@utility = arg
     elsif (opt == "--tag")
         @@tag = true
+    elsif (opt == "--verify-flac")
+        @@verify_flac = true
     elsif (opt == "--no-mangle-filename")
         @@nomangle = true
     end
@@ -124,7 +128,7 @@ if (!@@out_dir.nil? && @@inplace)
     puts "#{File.basename($0)}: --target-dir and --in-place are mutually exclusive"
     exit
 end
-if (@@out_dir.nil?)
+if (@@out_dir.nil? && !@@verify_flac)
     begin 
         if (ARGV.length > 0 && File.stat(ARGV[ARGV.length - 1]).directory?)
             @@out_dir = ARGV.pop
@@ -272,6 +276,12 @@ end
 @@badnames = []
 
 def process__(job, source, *args)
+    if (@@verify_flac)
+        args = ['-t', '-s', source]
+        puts_command("flac", args)
+        @@thread_mutex.synchronize {@@converted += 1}
+        return
+    end
     stripped = stripIllegal(source)
     safesource = stripped[0]
     if (@@nomangle && !stripped[1])
