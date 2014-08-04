@@ -47,18 +47,18 @@ int ProcessOutputDlg::exec(const QString &program, const QStringList &args)
 
 void ProcessOutputDlg::readData()
 {
-    m_process.setReadChannel(QProcess::StandardOutput);
-    if (int size = m_process.bytesAvailable())
-    {
-        QByteArray data = m_process.read(size);
-        ui->m_textBrowser->append(data);
-    }
-
     m_process.setReadChannel(QProcess::StandardError);
     if (int size = m_process.bytesAvailable())
     {
         QByteArray data = m_process.read(size);
         ui->m_textBrowser->append("\n[stderr]" + data + "[/stderr]");
+    }
+
+    m_process.setReadChannel(QProcess::StandardOutput);
+    if (int size = m_process.bytesAvailable())
+    {
+        QByteArray data = m_process.read(size);
+        ui->m_textBrowser->append(data);
     }
 }
 
