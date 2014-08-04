@@ -320,11 +320,13 @@ end
 
 def identify(source)
     extension = source.scan(/\.([^.]+)\Z/)[0][0]
+    sc = SystemCommand.new
+    sc.setVerbose(@@verbose)
     if (extension.upcase == 'PNG')
-        id = @@sc.execBackTick('file', ['--dereference', source])
+        id = sc.execBackTick('file', ['--dereference', source])
         return id.scan(/\s+(\d+)\s+x\s+(\d+)/)[0]
     else
-        id = @@sc.execBackTick('identify', [source])
+        id = sc.execBackTick('identify', [source])
         return id.scan(/\s+(\d+)x(\d+)/)[0]
     end
 end
