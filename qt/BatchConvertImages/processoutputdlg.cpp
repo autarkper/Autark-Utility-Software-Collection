@@ -92,6 +92,7 @@ void ProcessOutputDlg::on_process_finished(int exitCode, QProcess::ExitStatus /*
         return;
     }
 
+    readData();
     QString message;
     QTextStream(&message) << "Process finished with exitcode " << exitCode;
     ui->leStatus->setText(message);
