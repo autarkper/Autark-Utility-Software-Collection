@@ -35,7 +35,7 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
-def getCpuCount()
+def calculateMaxThreads()
     count = 0
     begin
         file = File.open('/proc/cpuinfo')
@@ -49,7 +49,7 @@ def getCpuCount()
         STDERR.puts("unable to open /proc/cpuinfo")
         count = 1
     end
-    return count
+    return [Integer(count/2), 1].max # avoid choking all the cpus
 end
 
 
@@ -57,7 +57,7 @@ end
 @@out_dir = nil
 @@dry_run = false
 @@overwrite = false
-@@max_threads = getCpuCount()
+@@max_threads = calculateMaxThreads()
 @@find_dir = []
 @@find_pattern = '*.flac'
 @@find_maxdepth = nil
