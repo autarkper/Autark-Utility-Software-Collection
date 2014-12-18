@@ -15,6 +15,7 @@ options = [
     ["--artist-before-song", GetoptLong::NO_ARGUMENT ],
     ["--verbose", GetoptLong::NO_ARGUMENT ],
     ["--no-recurse", GetoptLong::NO_ARGUMENT ],
+    ["--strip", GetoptLong::NO_ARGUMENT ],
     ]
 
 opts = GetoptLong.new()
@@ -26,6 +27,7 @@ opts.set_options(*options)
 @@keep = false
 @@verbose = false
 @@recurse = true
+@@strip = false
 
 opts.each {
     | opt, arg |
@@ -43,6 +45,8 @@ opts.each {
         @@verbose = true
     elsif (opt == "--no-recurse")
         @@recurse = false
+    elsif (opt == "--strip")
+        @@strip = true
     end
 }
 
@@ -75,7 +79,7 @@ def do_it(path, data)
                 end
             }
         }
-        if (comments > 0)
+        if (true)
             verbose = @@verbose
             begin
                 if (komments == data)
@@ -83,7 +87,7 @@ def do_it(path, data)
                         puts("keep unchanged tags for '#{path}':")
                     end
                     return
-                else
+                elsif (comments > 0)
                     if (@@keep)
                         puts("keep old tags for '#{path}':")
                         verbose = true
@@ -187,10 +191,12 @@ def recurse(entry__, staten)
                 artiste = (artisten || artist)
                 song.gsub!(slash_re, '/')
                 data = {}
-                data["Title"] = song
-                data["Tracknumber"] = track.to_s unless number.nil?
-                data["Artist"] = artiste.gsub(slash_re, '/') if (artiste != nil)
-                data["Album"]= album if (album != nil)
+                if (!@@strip)
+                    data["Title"] = song
+                    data["Tracknumber"] = track.to_s unless number.nil?
+                    data["Artist"] = artiste.gsub(slash_re, '/') if (artiste != nil)
+                    data["Album"]= album if (album != nil)
+                end
                 do_it(File.join(entry__,filexx), data)
             end
        end
