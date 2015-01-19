@@ -50,14 +50,13 @@ end
 @@rows.reverse.each {
     |cols|
     next if (cols[0] == "Datum")
-    p cols
+    # p cols
 
-    value = cols[6]
-    value.sub!(",", ".")
+    value = cols[6].sub(",", ".").to_f.abs
     type = cols[2]
     papern = cols[3]
-    amount = cols[4]
-    amount.sub!(",", ".")
+    amount = cols[4].sub(",", ".").to_f.abs
+    price = cols[5].sub(",", ".").to_f
 
     @@account = cols[1]
     if (type =~ /Ins.ttning/)
@@ -76,20 +75,21 @@ end
     end
 
     if (buy || sell)
+        value = value != 0 ? value : (amount * price).abs
         paper = @@papers[papern] || @@papers[papern] = @@Paper.new(0, 0, 0)
     end
     
     if (buy)
-        @@bought = @@bought - value.to_f
-        paper.amount = paper.amount + amount.to_f
-        paper.value = paper.value - value.to_f
+        @@bought = @@bought + value
+        paper.amount = paper.amount + amount
+        paper.value = paper.value + value
     end
     if (sell)
-        @@sold = @@sold + value.to_f
+        @@sold = @@sold + value
         acqv = paper.value/paper.amount
-        paper.amount = paper.amount + amount.to_f
-        paper.value = paper.value - value.to_f
-        paper.pnl = paper.pnl + value.to_f + (amount.to_f * acqv)
+        paper.amount = paper.amount - amount
+        paper.value = paper.value - value
+        paper.pnl = paper.pnl + value - (amount * acqv)
     end
 }
 puts "Konto: #{@@account}"
