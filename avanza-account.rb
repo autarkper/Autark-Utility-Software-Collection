@@ -26,7 +26,11 @@ if (!File.exists?(@@file))
 end
 
 def round(num)
-    return (num * 1000).round/1000.0
+    return rounda(num, 1000)
+end
+
+def rounda(num, precision)
+    return (num * precision.to_f).round/precision.to_f
 end
 
 @@rows = []
@@ -94,18 +98,21 @@ end
 }
 puts "Konto: #{@@account}"
 puts "Insättningar: #{@@deposits}, Uttag: #{@@withdrawn}, netto: #{netdep = @@deposits - @@withdrawn}"
-puts "Köpt: #{@@bought}, Sålt: #{@@sold}, netto: #{netbought = @@bought - @@sold}"
-puts "Saldo: #{netdep - netbought}"
+puts "Köpt: #{rounda(@@bought, 100)}, Sålt: #{rounda(@@sold, 100)}, netto: #{rounda(netbought = @@bought - @@sold, 100)}"
+puts "Saldo: #{rounda(netdep - netbought, 100)}"
 
 @@pnl = 0
+@@value = 0
 @@papers.keys.sort.each {
     |name|
     paper = @@papers[name]
     @@pnl = @@pnl + paper.pnl
+    pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
     if (paper.amount != 0)
-        puts "Paper: \"#{name}\", Amount: #{paper.amount}, Value: #{paper.value}, Acq. value: #{round(paper.value/paper.amount)}, PnL: #{paper.pnl}"
-    else
-        puts "Paper: \"#{name}\", PnL: #{round(paper.pnl)}"
+        puts "Paper: \"#{name}\", Amount: #{round(paper.amount)}, Value: #{round(paper.value)}, Acq. price: #{round(paper.value/paper.amount)}" + pnl
+        @@value = @@value + paper.value
+    elsif (paper.pnl != 0)
+        puts "Paper: \"#{name}\"" + pnl
     end
 }
-puts "Total realized PnL: #{round(@@pnl)}"
+puts "Total book value: #{rounda(@@value, 100)}, Total realized PnL: #{rounda(@@pnl, 100)}"
