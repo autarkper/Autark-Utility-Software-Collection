@@ -46,17 +46,21 @@ end
 @@withdrawn = 0
 @@bought = 0
 @@sold = 0
+@@dividends = 0
+@@prelskatt = 0
+@@other = 0
 
-@@Paper = Struct.new("Paper", :amount, :value, :pnl)
+@@Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
 
 @@papers = {}
 
 @@rows.reverse.each {
     |cols|
     next if (cols[0] == "Datum")
-    # p cols
+    #p cols
 
-    value = cols[6].sub(",", ".").to_f.abs
+    value_raw = cols[6].sub(",", ".").to_f
+    value = value_raw.abs
     type = cols[2]
     papern = cols[3]
     amount = cols[4].sub(",", ".").to_f.abs
@@ -64,10 +68,10 @@ end
 
     @@account = cols[1]
     if (type =~ /Ins.ttning/)
-        @@deposits = @@deposits + value.to_f
+        @@deposits += value.to_f
     end
     if (type =~ /Uttag/)
-        @@withdrawn = @@withdrawn - value.to_f
+        @@withdrawn -= value.to_f
     end
     buy = false
     sell = false
@@ -78,29 +82,45 @@ end
         sell = true
     end
 
-    if (buy || sell)
+    if (type == "Prelskatt utdelningar")
+        @@prelskatt += value
+        next
+    end
+    if (buy || sell || amount != 0)
         value = value != 0 ? value : (amount * price).abs
-        paper = @@papers[papern] || @@papers[papern] = @@Paper.new(0, 0, 0)
+        paper = @@papers[papern] || @@papers[papern] = @@Paper.new(0, 0, 0, 0, 0)
     end
     
+    if (type == "Utdelning")
+        paper.dividends = paper.dividends + value
+        @@dividends += value
+    end
+
+    if (type =~ /.vrigt/)
+        @@other += value_raw
+    end
+
     if (buy)
         @@bought = @@bought + value
         paper.amount = paper.amount + amount
-        paper.value = paper.value + value
+        paper.value += value
+        paper.highest = [paper.highest, price].max
     end
     if (sell)
         @@sold = @@sold + value
-        acqp = paper.value/paper.amount
+        acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
-        paper.amount = paper.amount - amount
-        paper.value = paper.value - acqv
-        paper.pnl = paper.pnl + value - acqv
+        paper.amount -= amount
+        paper.value -= acqv
+        paper.pnl += value - acqv
     end
 }
 puts "Konto: #{@@account}"
 puts "Insättningar: #{@@deposits}, Uttag: #{@@withdrawn}, netto: #{netdep = @@deposits - @@withdrawn}"
 puts "Köpt: #{rounda(@@bought, 100)}, Sålt: #{rounda(@@sold, 100)}, netto: #{rounda(netbought = @@bought - @@sold, 100)}"
-puts "Saldo: #{rounda(netdep - netbought, 100)}"
+puts "Utdelningar: #{@@dividends}, Prelskatt: #{@@prelskatt}"
+puts "Övrigt: #{@@other}"
+puts "Kassa: #{rounda(cash = netdep - netbought + @@dividends - @@prelskatt + @@other, 100)}"
 
 @@pnl = 0
 @@value = 0
@@ -117,14 +137,18 @@ puts "Saldo: #{rounda(netdep - netbought, 100)}"
     @@pnl = @@pnl + paper.pnl
     pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
     if (paper.amount != 0)
-        puts "Paper: \"#{name}\", Amount: #{round(paper.amount)}, Value: #{round(paper.value)}, Acq. price: #{round(paper.value/paper.amount)}" + pnl
+        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Ansk. pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
         @@value = @@value + paper.value
     elsif (paper.pnl != 0)
-        puts "Paper: \"#{name}\"" + pnl
+        puts "Papper: \"#{name}\"" + pnl
+    else
+        puts "Papper: \"#{name}\""
     end
 }
 if (round(v2 = netbought + @@pnl) != round(@@value))
     raise [v2, @@value].inspect
 end
 
-puts "Total book value: #{rounda(@@value, 100)}, Total realized PnL: #{rounda(@@pnl, 100)}"
+
+@@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
+puts "Totalt anskaffningsvärde: #{rounda(@@value, 100)}, Totalt realiserat resultat: #{rounda(@@pnl, 100)} (#{rounda(@@pnlpercent, 10)}% av insättningar)"
