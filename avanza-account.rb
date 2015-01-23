@@ -90,10 +90,11 @@ end
     end
     if (sell)
         @@sold = @@sold + value
-        acqv = paper.value/paper.amount
+        acqp = paper.value/paper.amount
+        acqv = acqp * amount
         paper.amount = paper.amount - amount
-        paper.value = paper.value - value
-        paper.pnl = paper.pnl + value - (amount * acqv)
+        paper.value = paper.value - acqv
+        paper.pnl = paper.pnl + value - acqv
     end
 }
 puts "Konto: #{@@account}"
@@ -115,4 +116,8 @@ puts "Saldo: #{rounda(netdep - netbought, 100)}"
         puts "Paper: \"#{name}\"" + pnl
     end
 }
+if (round(v2 = netbought + @@pnl) != round(@@value))
+    raise [v2, @@value].inspect
+end
+
 puts "Total book value: #{rounda(@@value, 100)}, Total realized PnL: #{rounda(@@pnl, 100)}"
