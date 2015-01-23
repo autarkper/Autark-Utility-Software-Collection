@@ -104,9 +104,16 @@ puts "Saldo: #{rounda(netdep - netbought, 100)}"
 
 @@pnl = 0
 @@value = 0
-@@papers.keys.sort.each {
-    |name|
-    paper = @@papers[name]
+@@papers.sort{|a, b|
+    boq = (b[1].amount == 0 ? 0 : 1)
+    aaq = (a[1].amount == 0 ? 0 : 1)
+    if (aaq != boq)
+        (aaq <=> boq) * -1
+    else
+        a[0] <=> b[0]
+    end
+    }.each {
+    |name, paper|
     @@pnl = @@pnl + paper.pnl
     pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
     if (paper.amount != 0)
