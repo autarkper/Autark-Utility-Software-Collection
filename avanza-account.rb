@@ -51,8 +51,10 @@ end
 @@other = 0
 
 @@Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
-
 @@papers = {}
+
+@@Sale = Struct.new("Sale", :paper, :date, :amount, :price, :acqp, :pnl)
+@@Sales = []
 
 @@rows.reverse.each {
     |cols|
@@ -101,27 +103,29 @@ end
     end
 
     if (buy)
-        @@bought = @@bought + value
+        @@bought += value
         paper.amount = paper.amount + amount
         paper.value += value
         paper.highest = [paper.highest, price].max
     end
     if (sell)
-        @@sold = @@sold + value
+        @@sold += value
         acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
         paper.amount -= amount
         paper.value -= acqv
-        paper.pnl += value - acqv
+        pnl = value - acqv
+        paper.pnl += pnl
+        @@Sales << @@Sale.new(papern, cols[0], amount, price, acqp, pnl)
     end
 }
 puts "Konto: #{@@account}"
 puts "Insättningar: #{@@deposits}, Uttag: #{@@withdrawn}, netto: #{netdep = @@deposits - @@withdrawn}"
-puts "Köpt: #{rounda(@@bought, 100)}, Sålt: #{rounda(@@sold, 100)}, netto: #{rounda(netbought = @@bought - @@sold, 100)}"
+puts "Köpt: #{rounda(@@bought, 100)}, Sålt: #{rounda(@@sold, 100)}"
 puts "Utdelningar: #{@@dividends}, Prelskatt: #{@@prelskatt}"
 puts "Övrigt: #{@@other}"
-puts "Kassa: #{rounda(cash = netdep - netbought + @@dividends - @@prelskatt + @@other, 100)}"
 
+netbought = @@bought - @@sold
 @@pnl = 0
 @@value = 0
 @@papers.sort{|a, b|
@@ -137,18 +141,20 @@ puts "Kassa: #{rounda(cash = netdep - netbought + @@dividends - @@prelskatt + @@
     @@pnl = @@pnl + paper.pnl
     pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
     if (paper.amount != 0)
-        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Ansk. pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
+        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
         @@value = @@value + paper.value
-    elsif (paper.pnl != 0)
-        puts "Papper: \"#{name}\"" + pnl
-    else
-        puts "Papper: \"#{name}\""
     end
 }
 if (round(v2 = netbought + @@pnl) != round(@@value))
     raise [v2, @@value].inspect
 end
 
+@@Sales.each {
+    |sale|
+    puts "[Försäljning] Datum: #{sale.date}, Papper: \"#{sale.paper}\", Antal: #{round(sale.amount)}, Pris: #{round(sale.price)}, Ansk.pris: #{round(sale.acqp)}, PnL: #{round(sale.pnl)}"
+}
 
 @@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
-puts "Totalt anskaffningsvärde: #{rounda(@@value, 100)}, Totalt realiserat resultat: #{rounda(@@pnl, 100)} (#{rounda(@@pnlpercent, 10)}% av insättningar)"
+puts "Totalt investerat: #{rounda(@@value, 100)}, Totalt realiserat resultat: #{rounda(@@pnl, 100)} (#{rounda(@@pnlpercent, 10)}% av insättningar)"
+puts "Kassa: #{rounda(cash = netdep - netbought + @@dividends - @@prelskatt + @@other, 100)}"
+puts "Kassa + investerat: #{rounda(@@value + cash, 100)}"
