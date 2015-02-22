@@ -49,12 +49,13 @@ end
 @@dividends = 0
 @@prelskatt = 0
 @@other = 0
+@@pnl0 = 0
 
 @@Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
 @@papers = {}
 
-@@Sale = Struct.new("Sale", :paper, :date, :amount, :price, :acqp, :pnl)
-@@Sales = []
+@@Transaction = Struct.new("Transaction", :type, :paper, :date, :amount, :price, :acqp, :pnl, :value)
+@@Transactions = []
 
 @@rows.reverse.each {
     |cols|
@@ -107,6 +108,8 @@ end
         paper.amount = paper.amount + amount
         paper.value += value
         paper.highest = [paper.highest, price].max
+        acqp = paper.value/paper.amount
+        @@Transactions << @@Transaction.new("Köp", papern, cols[0], amount, price, acqp, 0, value)
     end
     if (sell)
         @@sold += value
@@ -115,8 +118,9 @@ end
         paper.amount -= amount
         paper.value -= acqv
         pnl = value - acqv
+        @@pnl0 += pnl
         paper.pnl += pnl
-        @@Sales << @@Sale.new(papern, cols[0], amount, price, acqp, pnl)
+        @@Transactions << @@Transaction.new("Försäljning", papern, cols[0], amount, price, acqp, pnl, value)
     end
 }
 puts "Konto: #{@@account}"
@@ -128,6 +132,7 @@ puts "Övrigt: #{@@other}"
 netbought = @@bought - @@sold
 @@pnl = 0
 @@value = 0
+@@vikt = 0
 @@papers.sort{|a, b|
     boq = (b[1].amount == 0 ? 0 : 1)
     aaq = (a[1].amount == 0 ? 0 : 1)
@@ -141,17 +146,25 @@ netbought = @@bought - @@sold
     @@pnl = @@pnl + paper.pnl
     pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
     if (paper.amount != 0)
-        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
+        vikt = paper.value/(netbought + @@pnl0) * 100
+        @@vikt += vikt
+        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
         @@value = @@value + paper.value
     end
 }
+if (round(@@vikt) != round(100))
+    raise [@@vikt, 100.0].inspect
+end
+if (round(@@pnl) != round(@@pnl0))
+    raise [@@pnl0, @@value].inspect
+end
 if (round(v2 = netbought + @@pnl) != round(@@value))
     raise [v2, @@value].inspect
 end
 
-@@Sales.each {
-    |sale|
-    puts "[Försäljning] Datum: #{sale.date}, Papper: \"#{sale.paper}\", Antal: #{round(sale.amount)}, Pris: #{round(sale.price)}, Ansk.pris: #{round(sale.acqp)}, PnL: #{round(sale.pnl)}"
+@@Transactions.each {
+    |trans|
+    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{round(trans.amount)}, Belopp: #{round(trans.value)}, Pris: #{round(trans.price)}, Ansk.pris: #{round(trans.acqp)}, PnL: #{round(trans.pnl)}"
 }
 
 @@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
