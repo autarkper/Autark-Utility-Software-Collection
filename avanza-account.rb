@@ -4,6 +4,10 @@ $:.push(File.split($0)[0])
 
 require 'getoptlong'
 
+SALE = "Försäljning"
+BUY = "Inköp"
+DIVIDEND = "Utdelning"
+
 options = [
     ]
 
@@ -78,11 +82,23 @@ end
     end
     buy = false
     sell = false
-    if (type =~ /K.p/)
-        buy = true
+    correction = false
+    if (type =~ /, r.ttelse/)
+        correction = true
     end
-    if (type =~ /S.lj/)
-        sell = true
+
+    if (type =~ /K.p/)
+        if (!correction)
+            buy = true
+        else
+            sell = true
+        end
+    elsif (type =~ /S.lj/)
+        if (!correction)
+            sell = true
+        else
+            buy = true
+        end
     end
 
     if (type == "Prelskatt utdelningar")
@@ -95,8 +111,9 @@ end
     end
     
     if (type == "Utdelning")
-        paper.dividends = paper.dividends + value
+        paper.dividends += value
         @@dividends += value
+        @@Transactions << @@Transaction.new(DIVIDEND, papern, cols[0], amount, price, 0, 0, value)
     end
 
     if (type =~ /.vrigt/)
@@ -109,9 +126,8 @@ end
         paper.value += value
         paper.highest = [paper.highest, price].max
         acqp = paper.value/paper.amount
-        @@Transactions << @@Transaction.new("Köp", papern, cols[0], amount, price, acqp, 0, value)
-    end
-    if (sell)
+        @@Transactions << @@Transaction.new(BUY, papern, cols[0], amount, price, acqp, 0, value)
+    elsif (sell)
         @@sold += value
         acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
@@ -120,7 +136,7 @@ end
         pnl = value - acqv
         @@pnl0 += pnl
         paper.pnl += pnl
-        @@Transactions << @@Transaction.new("Försäljning", papern, cols[0], amount, price, acqp, pnl, value)
+        @@Transactions << @@Transaction.new(SALE, papern, cols[0], amount, price, acqp, pnl, value)
     end
 }
 puts "Konto: #{@@account}"
@@ -144,11 +160,12 @@ netbought = @@bought - @@sold
     }.each {
     |name, paper|
     @@pnl = @@pnl + paper.pnl
-    pnl = paper.pnl == 0 ? "" : ", PnL: #{round(paper.pnl)}"
+    pnl = (paper.pnl == 0) ? "" : ", PnL: #{round(paper.pnl)}"
+    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)} (#{round(paper.dividends/paper.amount)}%)"
     if (paper.amount != 0)
         vikt = paper.value/(netbought + @@pnl0) * 100
         @@vikt += vikt
-        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}" + pnl
+        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         @@value = @@value + paper.value
     end
 }
@@ -164,7 +181,9 @@ end
 
 @@Transactions.each {
     |trans|
-    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{round(trans.amount)}, Belopp: #{round(trans.value)}, Pris: #{round(trans.price)}, Ansk.pris: #{round(trans.acqp)}, PnL: #{round(trans.pnl)}"
+    pnl = trans.pnl == 0 ? "" : ", PnL: #{round(trans.pnl)}"
+    acqp = (trans.acqp == 0) ? "" : ", Ansk.pris: #{round(trans.acqp)}"
+    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{round(trans.amount)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
 }
 
 @@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
