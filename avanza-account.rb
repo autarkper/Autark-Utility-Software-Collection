@@ -161,7 +161,7 @@ netbought = @@bought - @@sold
     |name, paper|
     @@pnl = @@pnl + paper.pnl
     pnl = (paper.pnl == 0) ? "" : ", PnL: #{round(paper.pnl)}"
-    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)} (#{round(paper.dividends/paper.amount)}%)"
+    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)} (#{round(paper.dividends/paper.value * 100.0)}%)"
     if (paper.amount != 0)
         vikt = paper.value/(netbought + @@pnl0) * 100
         @@vikt += vikt
