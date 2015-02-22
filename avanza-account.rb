@@ -85,20 +85,14 @@ end
     correction = false
     if (type =~ /, r.ttelse/)
         correction = true
+        value = -value
+        amount = -amount
     end
 
     if (type =~ /K.p/)
-        if (!correction)
-            buy = true
-        else
-            sell = true
-        end
+        buy = true
     elsif (type =~ /S.lj/)
-        if (!correction)
-            sell = true
-        else
-            buy = true
-        end
+        sell = true
     end
 
     if (type == "Prelskatt utdelningar")
@@ -117,7 +111,11 @@ end
     end
 
     if (type =~ /.vrigt/)
-        @@other += value_raw
+        if (papern == "Avkastningsskatt")
+            @@prelskatt += value
+        else
+            @@other += value_raw
+        end
     end
 
     if (buy)
@@ -161,11 +159,12 @@ netbought = @@bought - @@sold
     |name, paper|
     @@pnl = @@pnl + paper.pnl
     pnl = (paper.pnl == 0) ? "" : ", PnL: #{round(paper.pnl)}"
-    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)} (#{round(paper.dividends/paper.value * 100.0)}%)"
+    divpercent = paper.value == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
+    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)}" + divpercent
     if (paper.amount != 0)
         vikt = paper.value/(netbought + @@pnl0) * 100
         @@vikt += vikt
-        puts "Papper: \"#{name}\", Antal: #{round(paper.amount)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
+        puts "Papper: \"#{name}\", Antal: #{rounda(paper.amount, 10000)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         @@value = @@value + paper.value
     end
 }
@@ -183,7 +182,7 @@ end
     |trans|
     pnl = trans.pnl == 0 ? "" : ", PnL: #{round(trans.pnl)}"
     acqp = (trans.acqp == 0) ? "" : ", Ansk.pris: #{round(trans.acqp)}"
-    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{round(trans.amount)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{rounda(trans.amount, 10000)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
 }
 
 @@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
