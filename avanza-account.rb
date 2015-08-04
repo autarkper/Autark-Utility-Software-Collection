@@ -143,6 +143,13 @@ puts "Köpt: #{rounda(@@bought, 100)}, Sålt: #{rounda(@@sold, 100)}"
 puts "Utdelningar: #{@@dividends}, Prelskatt: #{@@prelskatt}"
 puts "Övrigt: #{@@other}"
 
+@@Transactions.each {
+    |trans|
+    pnl = trans.pnl == 0 ? "" : ", PnL: #{round(trans.pnl)}"
+    acqp = (trans.acqp == 0) ? "" : ", Ansk.pris: #{round(trans.acqp)}"
+    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{rounda(trans.amount, 10000)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+}
+
 netbought = @@bought - @@sold
 @@pnl = 0
 @@value = 0
@@ -177,13 +184,6 @@ end
 if (round(v2 = netbought + @@pnl) != round(@@value))
     raise [v2, @@value].inspect
 end
-
-@@Transactions.each {
-    |trans|
-    pnl = trans.pnl == 0 ? "" : ", PnL: #{round(trans.pnl)}"
-    acqp = (trans.acqp == 0) ? "" : ", Ansk.pris: #{round(trans.acqp)}"
-    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{rounda(trans.amount, 10000)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
-}
 
 @@pnlpercent = @@deposits != 0 ? @@pnl / @@deposits * 100 : 0
 puts "Totalt investerat: #{rounda(@@value, 100)}, Totalt realiserat resultat: #{rounda(@@pnl, 100)} (#{rounda(@@pnlpercent, 10)}% av insättningar)"
