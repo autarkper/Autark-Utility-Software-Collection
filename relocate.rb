@@ -89,7 +89,7 @@ end
 
 class Relocator
     def followLink(linky)
-        path, entry = File.split(linky)
+        path = File.split(linky)[0]
         link = File.readlink(linky)
         is_relative = link[0..0] != '/'
         if (is_relative) # relative link
@@ -114,7 +114,6 @@ class Relocator
     def process_dir(path, a_stat)
         begin putc(".") ; STDOUT.flush end if @@verbosity > 1
         
-        this_path = File.expand_path(path)
         if (@seen.has_key?(a_stat.ino))
             return
         end
