@@ -210,12 +210,11 @@ def puts_command(cmd, args)
 end
 
 def stripIllegal(filename)
-    stripped = filename.gsub(/["*:<>?\\\|]/) {|ch| '%%%x' % ch[0]}
+    stripped = filename.gsub(/["*:<>?\\\|]/) {|ch| '%%%x' % ch.getbyte(0)}
     legal = filename == stripped
     stripped.gsub!(/./) {
         |ch| 
-        chr = ch[0]
-        #p chr
+        chr = ch.getbyte(0)
         (chr >= 32 && chr != 127 ) ? ch : ('%%%x' % chr)
     }
     return [stripped, legal]
