@@ -295,7 +295,6 @@ def process__(job, source, *args)
 
     File.basename(safesource).match(/(.+)(\.[^.]*)/)
     base = $1
-    extension = $2
     target_dir = make_dirs(safesource, *args)
 
     target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
@@ -331,7 +330,6 @@ def process__(job, source, *args)
                 tag_args = []
                 @@sc_silent.execReadPipe("metaflac", mf_args) {
                     |fh|
-                    tags = {}
                     fh.each_line {
                         |line|
                         line.match(%r{\A(.*?)=(.*)})
@@ -433,7 +431,7 @@ def process_filename(f, *args)
     bExists = FileTest.exists?(f)
     if (bExists)
         staten = File.stat(f)
-        next if (staten.directory?)
+        return if (staten.directory?)
         if (staten.size == 0)
             $stderr.puts "'#{f}': zero-length file"
         end
