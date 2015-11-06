@@ -1,4 +1,4 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/ruby -wE:utf-8
 
 $:.unshift(File.split($0)[0])
 
@@ -39,6 +39,7 @@ end
 
 $rows = []
 $fh = File.new($file, "r")
+$fh.set_encoding('iso-8859-1')
 $fh.each_line {
     |line|
     cols = line.split(";")
