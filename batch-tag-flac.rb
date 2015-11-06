@@ -3,7 +3,7 @@
 $:.push(File.split($0)[0])
 
 require "SystemCommand"
-require "ftools"
+require "fileutils"
 
 require 'getoptlong'
 
@@ -199,7 +199,7 @@ def recurse(entry__, staten)
                 end
                 do_it(File.join(entry__,filexx), data)
             end
-       end
+        end
     }
 end
 

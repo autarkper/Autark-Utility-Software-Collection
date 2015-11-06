@@ -4,7 +4,7 @@ $:.push(File.split($0)[0])
 
 require "SystemCommand"
 require "AutarkFileUtils"
-require "ftools"
+require "fileutils"
 
 require "tempfile"
 require 'getoptlong'

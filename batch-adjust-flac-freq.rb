@@ -3,7 +3,7 @@
 $:.push(File.split($0)[0])
 
 require "SystemCommand"
-require "ftools"
+require "fileutils"
 
 @@sysc = SystemCommand.new
 @@sysc.setDryRun(false)

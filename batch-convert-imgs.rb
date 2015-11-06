@@ -514,7 +514,7 @@ def process_filename(f, reldir = nil)
     bExists = FileTest.exists?(f)
     if (bExists)
         staten = File.stat(f)
-        next if (staten.directory?)
+        return if (staten.directory?)
         if (staten.size > 0)
             @@found_count += 1
             process( f, reldir )

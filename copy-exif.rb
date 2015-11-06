@@ -38,9 +38,9 @@ opts.each {
         @@do_exif = false
     elsif (opt == "--verbose")
         @@verbose = true
-     elsif (opt == "--no-geotag")
+    elsif (opt == "--no-geotag")
         @@no_geotag = true
-   end
+    end
 }
 
 @@source_dir.push(".") if @@source_dir.empty?
@@ -201,7 +201,6 @@ end
 
 def process(target)
     bMod = true
-    bExists = FileTest.exists?(target) && File.stat(target).size > 0
 
     @@attempted_count += 1
 
