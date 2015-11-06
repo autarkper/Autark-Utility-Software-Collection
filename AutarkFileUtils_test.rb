@@ -1,5 +1,6 @@
 #!/usr/bin/ruby -w
 
+$:.unshift(File.split($0)[0])
 require "AutarkFileUtils"
 
 def tester(test_sources, target)

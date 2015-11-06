@@ -1,6 +1,5 @@
 #!/usr/bin/ruby -w
-
-$:.push(File.split($0)[0])
+$:.unshift(File.split($0)[0])
 
 require "SystemCommand"
 
