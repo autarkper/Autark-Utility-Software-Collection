@@ -545,7 +545,9 @@ end
 if (@@exists > 0)
     puts "\n#{File.basename($0)}: Not overwritten: #{@@exists}"
 end
-puts "\n#{File.basename($0)}: Sucessfully processed #{@@converted} file#{if (@@converted != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
+if (@@converted > 0)
+    puts "\n#{File.basename($0)}: Sucessfully processed #{@@converted} file#{if (@@converted != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
+end
 
 failure_count = @@jobs_total - @@jobs_ok;
 if (failure_count > 0)
