@@ -77,18 +77,18 @@ opts.each {
         @@dry_run = true
     end
 }
-
-if (@@new_sample_rate == 44)
-    @@new_sample_rate = 44100
-elsif (@@new_sample_rate < 100)
-    @@new_sample_rate *= 1000
-end
     
 @@myprog = File.basename($0)
 
 if (ARGV.length < 1 || @@show_help || @@new_sample_rate.nil?)
     puts "Usage: #{@@myprog} [--new-sample-rate rate-in-hz] file-list"
     exit(1)
+end
+
+if (@@new_sample_rate == 44)
+    @@new_sample_rate = 44100
+elsif (@@new_sample_rate < 100)
+    @@new_sample_rate *= 1000
 end
 
 @@sysc = SystemCommand.new
