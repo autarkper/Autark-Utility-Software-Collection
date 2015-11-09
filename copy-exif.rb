@@ -19,41 +19,41 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
-@@show_help = false
-@@source_dir = []
-@@dry_run = false
-@@do_exif = true
-@@verbose = false
-@@no_geotag = false
+$show_help = false
+$source_dir = []
+$dry_run = false
+$do_exif = true
+$verbose = false
+$no_geotag = false
 
 opts.each {
     | opt, arg |
     if (opt == "--help")
-        @@show_help = true
+        $show_help = true
     elsif (opt == "--source-dir")
-        @@source_dir.push(arg)
+        $source_dir.push(arg)
     elsif (opt == "--dry-run")
-        @@dry_run = true
+        $dry_run = true
     elsif (opt == "--no-exif")
-        @@do_exif = false
+        $do_exif = false
     elsif (opt == "--verbose")
-        @@verbose = true
+        $verbose = true
     elsif (opt == "--no-geotag")
-        @@no_geotag = true
+        $no_geotag = true
     end
 }
 
-@@source_dir.push(".") if @@source_dir.empty?
+$source_dir.push(".") if $source_dir.empty?
 
-@@sysco = SystemCommand.new
-@@sysco.setDryRun(@@dry_run)
-@@sysco.setVerbose(true)
+$sysco = SystemCommand.new
+$sysco.setDryRun($dry_run)
+$sysco.setVerbose(true)
 
-@@silent_sc =  @@sysco.dup
-@@silent_sc.setVerbose(@@verbose)
+$silent_sc =  $sysco.dup
+$silent_sc.setVerbose($verbose)
 
 
-if (ARGV.length < 1 || @@show_help)
+if (ARGV.length < 1 || $show_help)
     usage = "\nusage: #{File.basename($0)} [options] file-pattern"
 
     options_string = "Options:\n"
@@ -69,7 +69,7 @@ if (ARGV.length < 1 || @@show_help)
     exit
 end
 
-@@source_dir.each {
+$source_dir.each {
     |dir|
 	if (!FileTest.exists?(dir))
 	    fail "source-directory '#{dir}' does not exist"
@@ -82,18 +82,18 @@ end
 }
 
 def puts_command(cmd, args)
-    @@sysco.safeExec(cmd, args)
+    $sysco.safeExec(cmd, args)
 end
 
 def do_touch(reference, target)
-    @@silent_sc.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
+    $silent_sc.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
 end
 
-@@ambiguous = []
+$ambiguous = []
 
-@@find_sc =  @@silent_sc.dup
-@@find_sc.failSoft(true)
-@@find_sc.setDryRun(false)
+$find_sc =  $silent_sc.dup
+$find_sc.failSoft(true)
+$find_sc.setDryRun(false)
 
 def find_file(dir, base, extlist, targetfile = nil)
     found = []
@@ -107,7 +107,7 @@ def find_file(dir, base, extlist, targetfile = nil)
     }
 
     samefiletest = targetfile != nil ? ['-a', '!', '-samefile', targetfile] : []
-    @@find_sc.execReadPipe('find', [dir, '(', candidates, ')', samefiletest, '-print0'].flatten) {
+    $find_sc.execReadPipe('find', [dir, '(', candidates, ')', samefiletest, '-print0'].flatten) {
         |fh|
         fh.each_line("\0") {
             |f|
@@ -117,22 +117,22 @@ def find_file(dir, base, extlist, targetfile = nil)
     }
 
     if (found.size > 1)
-        @@ambiguous << [base, found]
+        $ambiguous << [base, found]
        return nil
     end
     return found[0]
 end
 
-@@tmpdir = nil
+$tmpdir = nil
 
 def temp_dir()
-    if (@@tmpdir == nil)
+    if ($tmpdir == nil)
         tmpdir = File.split($0)[1] + '-' + $$.to_s + '-' + Time.now.to_i.to_s
-        if (@@find_sc.safeExec('mkdir', ['-p', @@tmpdir = File.join('/dev/shm', tmpdir)]) > 0)
-            @@silent_sc.safeExec('mkdir', ['-p', @@tmpdir = File.join('/tmp', tmpdir)])
+        if ($find_sc.safeExec('mkdir', ['-p', $tmpdir = File.join('/dev/shm', tmpdir)]) > 0)
+            $silent_sc.safeExec('mkdir', ['-p', $tmpdir = File.join('/tmp', tmpdir)])
         end
     end
-    return @@tmpdir
+    return $tmpdir
 end
 
 def exif_file(fulltarget)
@@ -151,14 +151,14 @@ def exif_file(fulltarget)
     file_info = nil
 
     if (file_info.nil?)
-        f = find_file(@@source_dir, base, %w(arw ARW), fulltarget)
+        f = find_file($source_dir, base, %w(arw ARW), fulltarget)
         if (f != nil)
             file_info = [f, false]
         end
     end
 
     if (file_info.nil?)
-        f = find_file(@@source_dir, base, %w(crw CRW))
+        f = find_file($source_dir, base, %w(crw CRW))
         if (f != nil)
             # This will use dcraw to extract the hidden thumbnail, which will
             # hopefully contain the needed exif info.
@@ -169,7 +169,7 @@ def exif_file(fulltarget)
             
             tmpdir = temp_dir()
             raw_alias = File.join(tmpdir, 'raw.ext')
-            @@silent_sc.safeExec('ln', ['-sfn', f, raw_alias] )
+            $silent_sc.safeExec('ln', ['-sfn', f, raw_alias] )
             puts_command("dcraw", ['-e', raw_alias]) # will produce a .thumb.jpg file in tempdir
 
             fthumb = File.join(tmpdir, 'raw.thumb.jpg')
@@ -181,7 +181,7 @@ def exif_file(fulltarget)
     end
 
     if (file_info.nil?)
-        f = find_file(@@source_dir, base, %w(thm THM jpg JPG), fulltarget)
+        f = find_file($source_dir, base, %w(thm THM jpg JPG), fulltarget)
         if (f != nil)
             file_info = [f, false]
         end
@@ -191,34 +191,34 @@ def exif_file(fulltarget)
     return file_info
 end
 
-@@failures = []
+$failures = []
 
-@@processed_count = 0
-@@attempted_count = 0
+$processed_count = 0
+$attempted_count = 0
 
-@@drift_lookup = {}
-@@gpx_lookup = {}
+$drift_lookup = {}
+$gpx_lookup = {}
 
 def process(target)
     bMod = true
 
-    @@attempted_count += 1
+    $attempted_count += 1
 
     exif = exif_file(target)
     if (exif.nil?)
-        @@failures.push(target)
+        $failures.push(target)
         return
     end
     
 
-    if (@@do_exif)
+    if ($do_exif)
         source_dir = File::split(exif[0])[0]
 
         bMod = false
-        ExifToolUtils.copyExif(@@sysco, exif[0], target)
+        ExifToolUtils.copyExif($sysco, exif[0], target)
         bMod = true
 
-        drift_args = @@drift_lookup[source_dir]
+        drift_args = $drift_lookup[source_dir]
         if (drift_args == nil)
             drift_file = File::join(source_dir, 'drift.txt')
             drift_args = []
@@ -242,14 +242,14 @@ def process(target)
                         }
                     }
             end
-            @@drift_lookup[source_dir] = drift_args
+            $drift_lookup[source_dir] = drift_args
         end
         if (!drift_args.empty?)
-            @@sysco.safeExec("exiftool", [drift_args, '-overwrite_original', target].flatten, true)
+            $sysco.safeExec("exiftool", [drift_args, '-overwrite_original', target].flatten, true)
         end
 
-        unless (@@no_geotag)
-            geotag_args = @@gpx_lookup[source_dir]
+        unless ($no_geotag)
+            geotag_args = $gpx_lookup[source_dir]
             if (geotag_args == nil)
                 geotag_args = []
                 geotag_file = File::join(source_dir, '*.gpx')
@@ -258,12 +258,12 @@ def process(target)
                 end
             end
             if (!geotag_args.empty?)
-                @@sysco.safeExec("exiftool", [geotag_args, '-overwrite_original', target].flatten, true)
+                $sysco.safeExec("exiftool", [geotag_args, '-overwrite_original', target].flatten, true)
             end
-            @@gpx_lookup[source_dir] = geotag_args
+            $gpx_lookup[source_dir] = geotag_args
         end
         
-        @@processed_count += 1
+        $processed_count += 1
     end
 
     if (bMod)
@@ -276,9 +276,9 @@ def process(target)
 end
 
 def cleanup()
-    if (@@tmpdir != nil)
-        puts_command('rm', ['-rf', @@tmpdir])
-        @@tmpdir = nil
+    if ($tmpdir != nil)
+        puts_command('rm', ['-rf', $tmpdir])
+        $tmpdir = nil
     end
 end
 
@@ -296,12 +296,12 @@ ARGV.each {
 }
 
 END {
-    @@failures.each {
+    $failures.each {
         |failure|
         $stderr.puts "Warning: Source file not found for '#{failure}'"
     }
 
-    @@ambiguous.each {
+    $ambiguous.each {
         |ambigs|
         target, files = *ambigs
         $stderr.puts "Warning: More than one source file found for '#{target}': #{files.inspect}"
@@ -309,6 +309,5 @@ END {
 
     cleanup()
 
-    puts "\nProcessed #{@@processed_count}/#{@@attempted_count} files"
+    puts "\nProcessed #{$processed_count}/#{$attempted_count} files"
 }
-

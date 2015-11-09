@@ -71,138 +71,138 @@ def getCpuCount()
 end
 
 
-@@show_help = false
-@@out_dir = nil
-@@dry_run = false
-@@do_exif = true
-@@keep_generated = false
-@@ppi = 300
-@@height = nil
-@@width = nil
-@@overwrite = false
-@@max_threads = getCpuCount()
-@@user_pixels = false
-@@quality = 96;
-@@find_dir = "."
-@@find_pattern = ""
-@@find_maxdepth = nil
-@@USM_amount = "1.0"
-@@USM_threshold = "0.01"
-@@USM_radius = nil
-@@USM_sigma = nil
-@@input_profile = nil
-@@profile = nil
-@@suffix = nil
-@@no_suffix = false
-@@target_type = 'jpg'
-@@verbose = false
-@@exif_copy = true
-@@straight = false
-@@update = false
-@@flatten = false
-@@frame_dim = 0
-@@frame_color = "#ffffff"
-@@no_sharpening = false
-@@newer_than = 0
-@@image_type = 'TrueColor'
-@@extra_parameters = []
-@@only_if_resize = false
-@@despeckle = false
-@@noise_radius = nil
-@@enhance = false
+$show_help = false
+$out_dir = nil
+$dry_run = false
+$do_exif = true
+$keep_generated = false
+$ppi = 300
+$height = nil
+$width = nil
+$overwrite = false
+$max_threads = getCpuCount()
+$user_pixels = false
+$quality = 96;
+$find_dir = "."
+$find_pattern = ""
+$find_maxdepth = nil
+$USM_amount = "1.0"
+$USM_threshold = "0.01"
+$USM_radius = nil
+$USM_sigma = nil
+$input_profile = nil
+$profile = nil
+$suffix = nil
+$no_suffix = false
+$target_type = 'jpg'
+$verbose = false
+$exif_copy = true
+$straight = false
+$update = false
+$flatten = false
+$frame_dim = 0
+$frame_color = "#ffffff"
+$no_sharpening = false
+$newer_than = 0
+$image_type = 'TrueColor'
+$extra_parameters = []
+$only_if_resize = false
+$despeckle = false
+$noise_radius = nil
+$enhance = false
 
 opts.each {
     | opt, arg |
     if (opt == "--help")
-        @@show_help = true
+        $show_help = true
     elsif (opt == "--target-dir")
-        @@out_dir = arg
+        $out_dir = arg
     elsif (opt == "--dry-run")
-        @@dry_run = true
+        $dry_run = true
     elsif (opt == "--pixels")
-        @@user_pixels = true
+        $user_pixels = true
     elsif (opt == "--mm")
-        @@user_pixels = false
+        $user_pixels = false
     elsif (opt == "--ppi")
-        @@ppi = arg.to_i
+        $ppi = arg.to_i
     elsif (opt == "--height")
-        @@height = arg.to_i
+        $height = arg.to_i
     elsif (opt == "--width")
-        @@width = arg.to_i
+        $width = arg.to_i
     elsif (opt == "--overwrite")
-        @@overwrite = true
+        $overwrite = true
     elsif (opt == "--threads")
-        @@max_threads = arg.to_i
+        $max_threads = arg.to_i
     elsif (opt == "--quality")
-        @@quality = arg.to_i
+        $quality = arg.to_i
     elsif (opt == "--find-dir")
-        @@find_dir = arg
+        $find_dir = arg
     elsif (opt == "--find-pattern")
-        @@find_pattern = arg
+        $find_pattern = arg
     elsif (opt == "--find-maxdepth")
-        @@find_maxdepth = arg
+        $find_maxdepth = arg
     elsif (opt == "--unsharp-amount")
-        @@USM_amount = "%1.1f" % (arg.to_i / 100.0)
+        $USM_amount = "%1.1f" % (arg.to_i / 100.0)
     elsif (opt == "--unsharp-threshold")
-        @@USM_threshold = "%1.2f" % (arg.to_i / 100.0)
+        $USM_threshold = "%1.2f" % (arg.to_i / 100.0)
     elsif (opt == "--input-profile")
-        @@input_profile = arg
+        $input_profile = arg
     elsif (opt == "--profile")
-        @@profile = arg
+        $profile = arg
     elsif (opt == "--suffix")
-        @@suffix = arg
+        $suffix = arg
     elsif (opt == "--target-type")
-        @@target_type = arg
+        $target_type = arg
     elsif (opt == "--verbose")
-        @@verbose = true
+        $verbose = true
     elsif (opt == "--no-exif-copy")
-        @@exif_copy = false
+        $exif_copy = false
     elsif (opt == "--straight-conversion")
-        @@straight = true
+        $straight = true
     elsif (opt == "--update-existing-only")
-        @@update = true
+        $update = true
     elsif (opt == "--flatten-output-directories")
-        @@flatten = true
+        $flatten = true
     elsif (opt == "--no-suffix")
-        @@no_suffix = true
+        $no_suffix = true
     elsif (opt == "--frame-dim")
-        @@frame_dim = arg.to_i
+        $frame_dim = arg.to_i
     elsif (opt == "--frame-color")
-        @@frame_color = arg
+        $frame_color = arg
     elsif (opt == "--no-unsharp-mask")
-        @@no_sharpening = true
+        $no_sharpening = true
     elsif (opt == "--unsharp-radius")
-        @@USM_radius = arg.to_f
+        $USM_radius = arg.to_f
     elsif (opt == "--unsharp-sigma")
-        @@USM_sigma = arg.to_f
+        $USM_sigma = arg.to_f
     elsif (opt == "--newer-than-epoch")
-        @@newer_than = arg.to_i
+        $newer_than = arg.to_i
     elsif (opt == "--image-type")
-        @@image_type = arg
+        $image_type = arg
     elsif (opt == "--extra-parameters")
-        @@extra_parameters << arg.split(/\s+/)
+        $extra_parameters << arg.split(/\s+/)
     elsif (opt == "--only-if-resize")
-        @@only_if_resize = true
+        $only_if_resize = true
     elsif (opt == "--despeckle")
-        @@despeckle = true
+        $despeckle = true
     elsif (opt == "--noise-radius")
-        @@noise_radius = arg
+        $noise_radius = arg
     elsif (opt == "--enhance")
-        @@enhance = true
+        $enhance = true
     end
 }
 
 
-if (@@out_dir.nil? && ARGV.length > 0)
-    @@out_dir = ARGV.pop
+if ($out_dir.nil? && ARGV.length > 0)
+    $out_dir = ARGV.pop
 end
 
-if (@@height == nil && @@width == nil)
-    @@height = 100
-    @@user_pixels = false
+if ($height == nil && $width == nil)
+    $height = 100
+    $user_pixels = false
 end
 
-@@usage = <<END_USAGE
+$usage = <<END_USAGE
 usage 1:
     #{File.basename($0)} [options] file-list target-directory
     Example: #{File.basename($0)} /tmp/*.png /media/usb1
@@ -214,7 +214,7 @@ usage 3:
     Example: #{File.basename($0)} --target-dir /media/usb1 --find-dir /tmp/ --find-pattern '*.png'
 END_USAGE
 
-if ((ARGV.length < 1 && @@find_pattern.length == 0) || @@show_help)
+if ((ARGV.length < 1 && $find_pattern.length == 0) || $show_help)
 
     options_string = "Options:\n"
     options_array =[]
@@ -224,53 +224,53 @@ if ((ARGV.length < 1 && @@find_pattern.length == 0) || @@show_help)
     }
     options_string += options_array.join("\n")
 
-    puts @@usage
+    puts $usage
     puts options_string
     exit 1
 end
 
-if (ARGV.length > 0 && @@find_pattern.length > 0)
+if (ARGV.length > 0 && $find_pattern.length > 0)
     puts "Error: Cannot mix --find-pattern and file list"
-    puts @@usage
+    puts $usage
     exit 1
 end
 
-if (@@ppi < 1 && !@@user_pixels)
+if ($ppi < 1 && !$user_pixels)
     puts "Error: Cannot mix 0 ppi and mm dimensions"
     exit 1
 end
 
 
-@@scVerbose = SystemCommand.new
-@@scVerbose.setVerbose(true)
-@@scVerbose.setDryRun(@@dry_run)
+$scVerbose = SystemCommand.new
+$scVerbose.setVerbose(true)
+$scVerbose.setDryRun($dry_run)
 
-@@sc = SystemCommand.new
-@@sc.setVerbose(@@verbose)
-@@sc.setDryRun(@@dry_run)
+$sc = SystemCommand.new
+$sc.setVerbose($verbose)
+$sc.setDryRun($dry_run)
 
 def puts_command(cmd, args)
-    return @@sc.safeExec(cmd, args)
+    return $sc.safeExec(cmd, args)
 end
 
-@@created_dir_mutex = Mutex.new
-@@created_dirs = {}
+$created_dir_mutex = Mutex.new
+$created_dirs = {}
 
 def join_dirs(sourcen, reldir)
-    source = @@flatten ? sourcen: AutarkFileUtils::make_relative(sourcen, reldir)
+    source = $flatten ? sourcen: AutarkFileUtils::make_relative(sourcen, reldir)
 
     fi = File.split(source)
     source_dir = fi[0]
 
-    @@created_dir_mutex.synchronize {
-        cached_dir = @@created_dirs[source_dir]
+    $created_dir_mutex.synchronize {
+        cached_dir = $created_dirs[source_dir]
         if (cached_dir != nil) then return cached_dir end
 
         target_dir = \
-        if (@@flatten)
-            @@out_dir # produce a flat target directory structure
+        if ($flatten)
+            $out_dir # produce a flat target directory structure
         else
-            File.join(@@out_dir, source_dir)
+            File.join($out_dir, source_dir)
         end
 
         if (!FileTest.exists?(target_dir))
@@ -278,7 +278,7 @@ def join_dirs(sourcen, reldir)
         end
 
         file_exists = FileTest.exists?(target_dir)
-        if (not file_exists and not @@dry_run)
+        if (not file_exists and not $dry_run)
             fail "target-directory '#{target_dir}' does not exist"
         end
 
@@ -289,7 +289,7 @@ def join_dirs(sourcen, reldir)
             end
         end
 
-        @@created_dirs[source_dir] = target_dir
+        $created_dirs[source_dir] = target_dir
         return target_dir
     }
 end
@@ -300,28 +300,28 @@ end
 
 def calcPixels(arg)
     if (arg.nil?) then return arg end
-    if (@@user_pixels) then return arg end
-    return ((arg * @@ppi) / 25.4).to_i
+    if ($user_pixels) then return arg end
+    return ((arg * $ppi) / 25.4).to_i
 end
 
-@@height_pixels = calcPixels(@@height)
-@@width_pixels = calcPixels(@@width)
+$height_pixels = calcPixels($height)
+$width_pixels = calcPixels($width)
 
-@@frame_px = calcPixels(@@frame_dim)
-@@width_pixels -= (@@frame_px * 2) if (@@width_pixels != nil)
-@@height_pixels -= (@@frame_px * 2) if (@@height_pixels != nil)
+$frame_px = calcPixels($frame_dim)
+$width_pixels -= ($frame_px * 2) if ($width_pixels != nil)
+$height_pixels -= ($frame_px * 2) if ($height_pixels != nil)
 
-if (@@ppi != 0)
-    @@USMrf = @@USM_radius || (@@ppi / 160.0)
+if ($ppi != 0)
+    $USMrf = $USM_radius || ($ppi / 160.0)
 
-    @@USMs = @@USM_sigma || ("%1.1f" % ((@@USMrf > 1.0) ? Math.sqrt(@@USMrf) : @@USMrf))
-    @@USMr = "%1.1f" % @@USMrf
+    $USMs = $USM_sigma || ("%1.1f" % (($USMrf > 1.0) ? Math.sqrt($USMrf) : $USMrf))
+    $USMr = "%1.1f" % $USMrf
 end
 
 def identify(source)
     extension = source.scan(/\.([^.]+)\Z/)[0][0]
     sc = SystemCommand.new
-    sc.setVerbose(@@verbose)
+    sc.setVerbose($verbose)
     if (extension.upcase == 'PNG')
         id = sc.execBackTick('file', ['--dereference', source])
         return id.scan(/\s+(\d+)\s+x\s+(\d+)/)[0]
@@ -367,12 +367,12 @@ output profile.
 def process__(source, reldir = nil)
     base = File.basename(source).sub(/(.+)\.[^.]*/, '\1')
     target_dir = join_dirs(source, reldir)
-    suffix = @@no_suffix ? nil: (@@suffix.nil? && !@@straight ? [@@ppi.to_s, @@height.to_s] : @@suffix)
-    target = File.join(target_dir, [base, suffix].compact.flatten.join('-') + "." + @@target_type)
+    suffix = $no_suffix ? nil: ($suffix.nil? && !$straight ? [$ppi.to_s, $height.to_s] : $suffix)
+    target = File.join(target_dir, [base, suffix].compact.flatten.join('-') + "." + $target_type)
 
-    if (@@newer_than != 0 && File.stat(source).mtime < Time.at(@@newer_than))
-        # p [File.stat(source).mtime, Time.at(@@newer_than)]
-        if (@@verbose)
+    if ($newer_than != 0 && File.stat(source).mtime < Time.at($newer_than))
+        # p [File.stat(source).mtime, Time.at($newer_than)]
+        if ($verbose)
             puts "#{source}: unchanged since last run (incremental)" 
         end
         return false
@@ -380,8 +380,8 @@ def process__(source, reldir = nil)
 
     bExists = FileTest.exists?(target)
     
-    if (@@update and !bExists)
-        if (@@verbose)
+    if ($update and !bExists)
+        if ($verbose)
             puts "#{source}: target does not exist (update)" 
         end
         return false
@@ -389,95 +389,95 @@ def process__(source, reldir = nil)
     
     bTargetOlder = bExists && File.stat(target).mtime < File.stat(source).mtime
 
-    if (bExists && (!bTargetOlder and !@@overwrite))
-        if (@@verbose)
+    if (bExists && (!bTargetOlder and !$overwrite))
+        if ($verbose)
             puts "#{source}: target newer than source (not overwrite)" 
         end
         return false
     end
 
-    input_profile_arg = !@@input_profile.nil? ? ['+profile', '*.ic?', '-profile', @@input_profile] : []
-    profile_arg = !@@profile.nil? ? [input_profile_arg, '-profile', @@profile] : []
-    image_type_arg = ['-type', @@image_type]
+    input_profile_arg = !$input_profile.nil? ? ['+profile', '*.ic?', '-profile', $input_profile] : []
+    profile_arg = !$profile.nil? ? [input_profile_arg, '-profile', $profile] : []
+    image_type_arg = ['-type', $image_type]
     frame_arg = resize_arg = density_arg = quality_arg = unsharp_arg = nil
     despeckle_arg = nil
     noise_arg = nil
     enhance_arg = nil
-    if (!@@straight)
+    if (!$straight)
         dims = identify(source)
-        if (@@only_if_resize)
+        if ($only_if_resize)
             dims2 = dims.collect {|i|i.to_i}
             puts "#{source}: #{dims2[0]}x#{dims2[1]} px"
             dims_max = dims2.max
-            target_max = [@@height_pixels.to_i, @@width_pixels.to_i].max
+            target_max = [$height_pixels.to_i, $width_pixels.to_i].max
             if (dims_max <= target_max)
                 puts "#{source}: no resize (#{dims_max} vs #{target_max} px)"
                 return false
             end
         end
-        despeckle_arg = "-despeckle" if (@@despeckle)
-        noise_arg = ["-noise", @@noise_radius.to_s] if (@@noise_radius)
-        enhance_arg = "-enhance" if (@@enhance)
-        resize_args = if (dims[0].to_i < dims[1].to_i) then "#{@@height_pixels}x#{@@width_pixels or ''}>" else "#{@@width_pixels or ''}x#{@@height_pixels}>" end
+        despeckle_arg = "-despeckle" if ($despeckle)
+        noise_arg = ["-noise", $noise_radius.to_s] if ($noise_radius)
+        enhance_arg = "-enhance" if ($enhance)
+        resize_args = if (dims[0].to_i < dims[1].to_i) then "#{$height_pixels}x#{$width_pixels or ''}>" else "#{$width_pixels or ''}x#{$height_pixels}>" end
         resize_arg = ['-filter', 'Lanczos', '-resize', resize_args]
-        if (@@ppi != 0)
-            density_arg = ['-density', "#{@@ppi}x#{@@ppi}"]
-            if (!@@no_sharpening)
-                unsharp_arg = ['-unsharp', "#{@@USMr}x#{@@USMs}+#{@@USM_amount}+#{@@USM_threshold}"]
+        if ($ppi != 0)
+            density_arg = ['-density', "#{$ppi}x#{$ppi}"]
+            if (!$no_sharpening)
+                unsharp_arg = ['-unsharp', "#{$USMr}x#{$USMs}+#{$USM_amount}+#{$USM_threshold}"]
             end
         end
-        quality_arg = ['-quality', @@quality.to_s] unless (@@quality == 0)
-        frame_arg = (@@frame_dim != 0) ? ['-mattecolor', @@frame_color, '-frame', "#{@@frame_px}x#{@@frame_px}"] : nil
+        quality_arg = ['-quality', $quality.to_s] unless ($quality == 0)
+        frame_arg = ($frame_dim != 0) ? ['-mattecolor', $frame_color, '-frame', "#{$frame_px}x#{$frame_px}"] : nil
     end
 
-    @@scVerbose.safeExec("convert", [source, noise_arg, despeckle_arg, enhance_arg, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, @@extra_parameters, target].flatten.compact)
+    $scVerbose.safeExec("convert", [source, noise_arg, despeckle_arg, enhance_arg, resize_arg, density_arg, image_type_arg, quality_arg, profile_arg, unsharp_arg, frame_arg, $extra_parameters, target].flatten.compact)
 
-    if (@@exif_copy)
-        ExifToolUtils.copyExif(@@sc, source, target)
+    if ($exif_copy)
+        ExifToolUtils.copyExif($sc, source, target)
     end
     do_touch(source, target)
     return true
 end
 
-@@thread_count = 0
-@@thread_mutex = Mutex.new
-@@thread_condition = ConditionVariable.new
-@@jobs_done = 0
-@@jobs_skipped = 0
-@@jobs_failed = []
-@@jobs_started = 0
-@@jobs_total = 0
-@@all_jobs_started = false
-@@job_queue = []
+$thread_count = 0
+$thread_mutex = Mutex.new
+$thread_condition = ConditionVariable.new
+$jobs_done = 0
+$jobs_skipped = 0
+$jobs_failed = []
+$jobs_started = 0
+$jobs_total = 0
+$all_jobs_started = false
+$job_queue = []
 
-if (@@max_threads < 1)
-    @@max_threads = 1
+if ($max_threads < 1)
+    $max_threads = 1
 end
 
 def no_more_jobs()
-    return @@all_jobs_started && @@jobs_total == @@jobs_done
+    return $all_jobs_started && $jobs_total == $jobs_done
 end
 
 def process(*args)
-    @@thread_mutex.synchronize {
-        @@job_queue.push(args)
-        @@thread_condition.signal
+    $thread_mutex.synchronize {
+        $job_queue.push(args)
+        $thread_condition.signal
 
-        if (@@thread_count < @@max_threads)
-            @@thread_count += 1
+        if ($thread_count < $max_threads)
+            $thread_count += 1
             Thread.new {
                 begin
                     while (true)
                         job_number = 0
                         arguments = nil
-                        @@thread_mutex.synchronize {
-                            while (@@job_queue.size == 0 && !no_more_jobs())
-                                @@thread_condition.wait(@@thread_mutex)
+                        $thread_mutex.synchronize {
+                            while ($job_queue.size == 0 && !no_more_jobs())
+                                $thread_condition.wait($thread_mutex)
                             end
                             if (!no_more_jobs())
-                                arguments = @@job_queue.shift
-                                job_number = @@jobs_started += 1
-                                puts "Starting job #{job_number}/#{@@jobs_total}: #{arguments[0]}" # if (@@verbose)
+                                arguments = $job_queue.shift
+                                job_number = $jobs_started += 1
+                                puts "Starting job #{job_number}/#{$jobs_total}: #{arguments[0]}" # if ($verbose)
                             end
                         } # synch
                         break if (job_number == 0)
@@ -490,25 +490,25 @@ def process(*args)
                             p obj
                             failed = true
                         ensure
-                            @@thread_mutex.synchronize {
-                                if (@@verbose)
+                            $thread_mutex.synchronize {
+                                if ($verbose)
                                   puts "Finished job #{job_number}#{skipped ? ' (skipped)':''}"
                                 end
-                                @@jobs_done += 1
-                                @@jobs_skipped += 1 if (skipped)
-                                @@jobs_failed << arguments[0] if (failed)
+                                $jobs_done += 1
+                                $jobs_skipped += 1 if (skipped)
+                                $jobs_failed << arguments[0] if (failed)
                             }
                         end
                     end # while
                 ensure
-                    @@thread_mutex.synchronize {@@thread_count -= 1;@@thread_condition.broadcast}
+                    $thread_mutex.synchronize {$thread_count -= 1;$thread_condition.broadcast}
                 end
             }.run
         end # end
         }
 end
 
-@@found_count = 0
+$found_count = 0
 
 def process_filename(f, reldir = nil)
     bExists = FileTest.exists?(f)
@@ -516,7 +516,7 @@ def process_filename(f, reldir = nil)
         staten = File.stat(f)
         return if (staten.directory?)
         if (staten.size > 0)
-            @@found_count += 1
+            $found_count += 1
             process( f, reldir )
         else
             $stderr.puts "'#{f}': zero-length file"
@@ -526,13 +526,13 @@ def process_filename(f, reldir = nil)
     end
 end
 
-if (@@find_pattern.length > 0)
+if ($find_pattern.length > 0)
     sc = SystemCommand.new
     sc.setVerbose
     sc.failSoft(true)
     list = []
-    depth_args = @@find_maxdepth.nil? ? [] : ['-maxdepth', @@find_maxdepth]
-    sc.execReadPipe('find', [@@find_dir, depth_args, '-name', @@find_pattern, '-print0'].flatten) {
+    depth_args = $find_maxdepth.nil? ? [] : ['-maxdepth', $find_maxdepth]
+    sc.execReadPipe('find', [$find_dir, depth_args, '-name', $find_pattern, '-print0'].flatten) {
         |fh|
         fh.each_line("\0") {
             |f|
@@ -540,36 +540,36 @@ if (@@find_pattern.length > 0)
             list << f
         }
     }
-    @@jobs_total = list.size
+    $jobs_total = list.size
     list.each {
         |f|
-        process_filename(f, @@find_dir)
+        process_filename(f, $find_dir)
     }
 else
-    @@jobs_total = ARGV.size
+    $jobs_total = ARGV.size
     ARGV.each {
         |f|
-        process_filename(f, @@out_dir)
+        process_filename(f, $out_dir)
     }
 end
 
-raise "strange" if (@@found_count != @@jobs_total)
+raise "strange" if ($found_count != $jobs_total)
 
-@@thread_mutex.synchronize {
-    @@all_jobs_started = true
-    while (@@jobs_total > @@jobs_done)
-        @@thread_condition.wait(@@thread_mutex)
+$thread_mutex.synchronize {
+    $all_jobs_started = true
+    while ($jobs_total > $jobs_done)
+        $thread_condition.wait($thread_mutex)
     end
 
     Thread.list {|thread| thread.join}
 }
 
-really_processed = @@jobs_done - @@jobs_skipped
-puts "\n#{File.basename($0)}: #{if (@@dry_run) then ' (DRY RUN) ' end}Processed #{really_processed} image#{if (really_processed != 1) then 's' end}#{if (@@jobs_skipped>0) then ' (skipped ' + @@jobs_skipped.to_s + ')' end}."
-if (@@jobs_failed.length>0)
-    puts 'FAILED ' + @@jobs_failed.length.to_s + ':'
-    @@jobs_failed.each {
+really_processed = $jobs_done - $jobs_skipped
+puts "\n#{File.basename($0)}: #{if ($dry_run) then ' (DRY RUN) ' end}Processed #{really_processed} image#{if (really_processed != 1) then 's' end}#{if ($jobs_skipped>0) then ' (skipped ' + $jobs_skipped.to_s + ')' end}."
+if ($jobs_failed.length>0)
+    puts 'FAILED ' + $jobs_failed.length.to_s + ':'
+    $jobs_failed.each {
         |arg| puts arg
     }
 end
-exit(really_processed > 0 ? @@jobs_failed.length : -1)
+exit(really_processed > 0 ? $jobs_failed.length : -1)

@@ -23,44 +23,44 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
-@@dry_run = false
-@@show_help = false
-@@allow_bad_link = false
-@@verbosity = 1
-@@convert_to_absolute = false
-@@no_follow = false
-@@recursive = true
-@@force_summary = false
+$dry_run = false
+$show_help = false
+$allow_bad_link = false
+$verbosity = 1
+$convert_to_absolute = false
+$no_follow = false
+$recursive = true
+$force_summary = false
 
 opts.each {
     | opt, arg |
     if (opt == "--help")
-        @@show_help = true
+        $show_help = true
     elsif (opt == "--dry-run")
-        @@dry_run = true
+        $dry_run = true
     elsif (opt == "--allow-bad-link")
-        @@allow_bad_link = true
+        $allow_bad_link = true
     elsif (opt == "--no-follow")
-        @@no_follow = true
+        $no_follow = true
     elsif (opt == "--no-recursive")
-        @@recursive = false
+        $recursive = false
     elsif (opt == "--verbose")
-        @@verbosity = 2
+        $verbosity = 2
     elsif (opt == "--silent")
-        @@verbosity = 0
+        $verbosity = 0
     elsif (opt == "--summary")
-        @@force_summary = true
+        $force_summary = true
     elsif (opt == "--convert-to-absolute-link")
-        @@convert_to_absolute = true
+        $convert_to_absolute = true
     end}
 
-@@my_name = File.basename($0)
+$my_name = File.basename($0)
 
-@@req_args = 1
-if (@@show_help || ARGV.length() < @@req_args)
+$req_args = 1
+if ($show_help || ARGV.length() < $req_args)
     usage = <<END_USAGE
 \nusage:
-    #{@@my_name} [options] directory-1 [directory-2 ... directory-n]
+    #{$my_name} [options] directory-1 [directory-2 ... directory-n]
 Relocates symbolic links (default: convert absolute to relative) and optionally resolves link chains.
 END_USAGE
 
@@ -77,15 +77,15 @@ END_USAGE
     exit
 end
 
-@@system_command = SystemCommand.new
-@@system_command.setDryRun(@@dry_run)
-@@system_command.setVerbose(@@verbosity > 0)
+$system_command = SystemCommand.new
+$system_command.setDryRun($dry_run)
+$system_command.setVerbose($verbosity > 0)
 
-@@dont_do_it = false
+$dont_do_it = false
 
-@@relocated_count = 0
-@@skipped_count = 0
-@@bad_count = 0
+$relocated_count = 0
+$skipped_count = 0
+$bad_count = 0
 
 class Relocator
     def followLink(linky)
@@ -97,13 +97,13 @@ class Relocator
         end
         absolute_link = File.expand_path(link)
         if (not File.exists?(absolute_link))
-            STDERR.puts("#{@@my_name}: '#{absolute_link}' (alias '#{linky}') does not exist")
-            if (not @@allow_bad_link)
-                @@dont_do_it = true
+            STDERR.puts("#{$my_name}: '#{absolute_link}' (alias '#{linky}') does not exist")
+            if (not $allow_bad_link)
+                $dont_do_it = true
             end
-            @@bad_count += 1
+            $bad_count += 1
         else
-            if (!@@no_follow && File.lstat(absolute_link).symlink?)
+            if (!$no_follow && File.lstat(absolute_link).symlink?)
                 return followLink(absolute_link)
             end
         end
@@ -112,7 +112,7 @@ class Relocator
     end
     
     def process_dir(path, a_stat)
-        begin putc(".") ; STDOUT.flush end if @@verbosity > 1
+        begin putc(".") ; STDOUT.flush end if $verbosity > 1
         
         if (@seen.has_key?(a_stat.ino))
             return
@@ -124,7 +124,7 @@ class Relocator
             fullentry = File.join(path, entry)
 
             stat = File.lstat(fullentry)
-            if (stat.directory? && @@recursive)
+            if (stat.directory? && $recursive)
                 if (entry != '..')
                     process_dir(fullentry, stat)
                 end
@@ -143,10 +143,10 @@ class Relocator
         @newlinks = {}
 
         process_dir(sourcedir, File.lstat(sourcedir))
-        puts if @@verbosity > 1
+        puts if $verbosity > 1
 
         commands = []
-        @@dont_do_it = false
+        $dont_do_it = false
         
         @newlinks.each{ 
             |path, links|
@@ -154,14 +154,14 @@ class Relocator
                 |sourcelink|
                 name, source, origlink = sourcelink
                 targetpath = File.expand_path(path)
-                adjusted_source = !@@convert_to_absolute \
+                adjusted_source = !$convert_to_absolute \
                     ? AutarkFileUtils.make_relative(source, targetpath) \
                     : source
                 target = File.join(path, name)
                 
                 if (adjusted_source == origlink)
-                    puts "skipping: '#{target}' -> '#{adjusted_source}' (unchanged)" if @@verbosity > 1
-                    @@skipped_count += 1
+                    puts "skipping: '#{target}' -> '#{adjusted_source}' (unchanged)" if $verbosity > 1
+                    $skipped_count += 1
                 else
                     if (adjusted_source.empty?)
                         adjusted_source = "."
@@ -171,7 +171,7 @@ class Relocator
             }
         }
 
-        unless (@@dont_do_it)
+        unless ($dont_do_it)
             commands.each {
                 |command|
                 source, target = command
@@ -183,8 +183,8 @@ class Relocator
     #         treat destination that is a symlink to a directory as if it were a normal file
 
                 fail "target empty" if (target.empty?)
-                @@system_command.safeExec("ln", ["-sfn", source, target])
-                @@relocated_count += 1
+                $system_command.safeExec("ln", ["-sfn", source, target])
+                $relocated_count += 1
             }
         end
     end
@@ -205,14 +205,14 @@ ARGV.each {
 
     Relocator.new.work(source)
 }
-if (@@verbosity > 0 or @@force_summary)
-    if (@@dry_run)
-        puts "#{@@my_name}: Dry run. Would relocate: #{@@relocated_count}, would skip: #{@@skipped_count}."
+if ($verbosity > 0 or $force_summary)
+    if ($dry_run)
+        puts "#{$my_name}: Dry run. Would relocate: #{$relocated_count}, would skip: #{$skipped_count}."
     else
-        puts "#{@@my_name}: Relocated: #{@@relocated_count}, skipped: #{@@skipped_count}."
+        puts "#{$my_name}: Relocated: #{$relocated_count}, skipped: #{$skipped_count}."
     end
 end
 
-if (@@bad_count > 0) then STDERR.puts "Bad links: #{@@bad_count}!" end
+if ($bad_count > 0) then STDERR.puts "Bad links: #{$bad_count}!" end
 
-exit 1 if (@@dont_do_it)
+exit 1 if ($dont_do_it)

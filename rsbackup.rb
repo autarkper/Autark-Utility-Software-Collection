@@ -50,11 +50,11 @@ opts = GetoptLong.new(
     [ "--detailed", GetoptLong::NO_ARGUMENT]
 )
 
-@@bBatchMode = false
-@@bDryRun = true
-@@logfile = ""
-@@target = nil
-@@dobackup = true
+$bBatchMode = false
+$bDryRun = true
+$logfile = ""
+$target = nil
+$dobackup = true
 
 opts.each {
     | opt, arg |
@@ -62,14 +62,14 @@ opts.each {
         puts usage
         exit(0)
     elsif (opt == "--batch")
-        @@bBatchMode = true
+        $bBatchMode = true
     elsif (opt == "--wet-run")
-        @@bDryRun = false
+        $bDryRun = false
         options.delete( "--dry-run" )
     elsif (opt == "--target")
-        @@target = arg
+        $target = arg
     elsif (opt == "--no-backup")
-        @@dobackup = false
+        $dobackup = false
     elsif (opt == "--checksum")
         options["--checksum"] = 1
     elsif (opt == "--detailed")
@@ -77,19 +77,19 @@ opts.each {
     end
 }
 
-@@bBatchMode = @@bDryRun || @@bBatchMode
+$bBatchMode = $bDryRun || $bBatchMode
 
-if (@@target == nil)
+if ($target == nil)
     puts usage
     exit
 end
 
-if (!FileTest.exists?(@@target))
-    puts "target directory (" + @@target + ") does not exist"
+if (!FileTest.exists?($target))
+    puts "target directory (" + $target + ") does not exist"
     exit
 end
-if (!FileTest.directory?(@@target))
-    puts "target directory (" + @@target + ") is not a directory"
+if (!FileTest.directory?($target))
+    puts "target directory (" + $target + ") is not a directory"
     exit
 end
 
@@ -98,9 +98,9 @@ if (ARGV.length < 1)
     exit
 end
 
-if (@@bDryRun)
+if ($bDryRun)
     puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
-elsif (!@@dobackup)
+elsif (!$dobackup)
     puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
     input = STDIN.gets.chomp
     if (input != "No backup")
@@ -111,9 +111,9 @@ end
 def execute(command, args)
     
     logfileh = nil
-    if (!@@bDryRun)
+    if (!$bDryRun)
         begin
-            logfileh = File.open( @@logfile, "w" )
+            logfileh = File.open( $logfile, "w" )
         rescue Exception => e
             STDERR.puts('ERROR: could not create log file, "' + e + '"')
             exit(1)
@@ -129,11 +129,11 @@ def execute(command, args)
             logfileh.flush()
         end
         }
-    output.call "\nTarget directory: " + @@hardtarget
-    output.call "Backup directory: " + @@backup_dir
-    output.call "Log file: " + @@logfile
+    output.call "\nTarget directory: " + $hardtarget
+    output.call "Backup directory: " + $backup_dir
+    output.call "Log file: " + $logfile
     output.call "Command:\nrsync " + args.join( ' ' )
-    if (!@@bBatchMode && STDERR.isatty)
+    if (!$bBatchMode && STDERR.isatty)
         STDOUT.flush
         STDERR.puts "\nOK? (Press CTRL+C to abort.)"
         begin        
@@ -204,24 +204,24 @@ ARGV.each {
 ARGV.each {
     | dir |
     reldir = dir[1, dir.length]
-    target_base = File.expand_path(File.join(@@target, '.versions', reldir))
+    target_base = File.expand_path(File.join($target, '.versions', reldir))
 
     backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
-    @@backup_dir = target_base + backup_suffix
-    @@logfile = File.expand_path(File.join(@@target, '.' + dir.split('/').join('_'))) + "-log" + backup_suffix
-    @@hardtarget = File.expand_path(File.join(@@target, reldir, ".."))
+    $backup_dir = target_base + backup_suffix
+    $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('_'))) + "-log" + backup_suffix
+    $hardtarget = File.expand_path(File.join($target, reldir, ".."))
     
-    if (!FileTest.exists?(@@hardtarget))
-        puts "target directory (" + @@hardtarget + ") must exist"
+    if (!FileTest.exists?($hardtarget))
+        puts "target directory (" + $hardtarget + ") must exist"
         exit
     end
     
     base = [
     ]
-    if (@@dobackup)
+    if ($dobackup)
         base  = base + [
                 "--backup",
-                "--backup-dir=" + @@backup_dir,
+                "--backup-dir=" + $backup_dir,
         ]
     end
 
@@ -232,7 +232,7 @@ ARGV.each {
 
     dirs = [
             dir,
-            @@hardtarget
+            $hardtarget
         ]
     
     execute( "rsync", base + options.keys + dirs )        

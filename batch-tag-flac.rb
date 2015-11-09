@@ -21,50 +21,50 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
-@@dry_run = false
-@@overwrite = false
-@@song_before_artist = false
-@@keep = false
-@@verbose = false
-@@recurse = true
-@@strip = false
+$dry_run = false
+$overwrite = false
+$song_before_artist = false
+$keep = false
+$verbose = false
+$recurse = true
+$strip = false
 
 opts.each {
     | opt, arg |
     if (opt == "--dry-run")
-        @@dry_run = true
+        $dry_run = true
     elsif (opt == "--overwrite")
-        @@overwrite = true
+        $overwrite = true
     elsif (opt == "--keep")
-        @@keep = true
+        $keep = true
     elsif (opt == "--song-before-artist")
-        @@song_before_artist = true
+        $song_before_artist = true
     elsif (opt == "--artist-before-song")
-        @@song_before_artist = false
+        $song_before_artist = false
     elsif (opt == "--verbose")
-        @@verbose = true
+        $verbose = true
     elsif (opt == "--no-recurse")
-        @@recurse = false
+        $recurse = false
     elsif (opt == "--strip")
-        @@strip = true
+        $strip = true
     end
 }
 
-@@sysc = SystemCommand.new
-@@sysc.setVerbose(false)
-@@sysc_ro = @@sysc.dup
-@@sysc.setDryRun(@@dry_run)
+$sysc = SystemCommand.new
+$sysc.setVerbose(false)
+$sysc_ro = $sysc.dup
+$sysc.setDryRun($dry_run)
 
-@@has_comment = []
-@@skipped = []
-@@skipped_files = []
-@@error = []
+$has_comment = []
+$skipped = []
+$skipped_files = []
+$error = []
 
 def do_it(path, data)
     comments = 0
-    if (!@@overwrite)
+    if (!$overwrite)
         komments = {}
-        @@sysc_ro.execReadPipe('metaflac', [path, '--list', '--block-type=VORBIS_COMMENT']) {
+        $sysc_ro.execReadPipe('metaflac', [path, '--list', '--block-type=VORBIS_COMMENT']) {
             |fd|
             fd.each_line {
                 |line|
@@ -80,15 +80,15 @@ def do_it(path, data)
             }
         }
         if (true)
-            verbose = @@verbose
+            verbose = $verbose
             begin
                 if (komments == data)
-                    if (@@verbose)
+                    if ($verbose)
                         puts("keep unchanged tags for '#{path}':")
                     end
                     return
                 elsif (comments > 0)
-                    if (@@keep)
+                    if ($keep)
                         puts("keep old tags for '#{path}':")
                         verbose = true
                         return
@@ -106,18 +106,18 @@ def do_it(path, data)
 
     entries = []
     data.keys.each {|key| entries << (key + "=" + data[key])}
-    puts( (@@dry_run ? '#' : '') + "metaflac " + path + " [" + entries.join(", ") + "]" )
+    puts( ($dry_run ? '#' : '') + "metaflac " + path + " [" + entries.join(", ") + "]" )
 
-    if (!@@dry_run)
-        @@sysc.execWritePipe('metaflac', [path, '--remove-all-tags', '--import-tags-from=-', '--preserve-modtime']) {
+    if (!$dry_run)
+        $sysc.execWritePipe('metaflac', [path, '--remove-all-tags', '--import-tags-from=-', '--preserve-modtime']) {
             |fd|
             entries.each {|entry| fd.puts(entry)}
         }
     end
-    @@sysc.safeExec('touch', ['--reference', path, '-d', '+5 seconds', path])
+    $sysc.safeExec('touch', ['--reference', path, '-d', '+5 seconds', path])
 end
 
-@@seen = {}
+$seen = {}
 
 def demangle(string)
     # "%3f" -> "?", etc
@@ -130,8 +130,8 @@ def recurse(entry__, staten)
     entry__ = File.expand_path(entry__)
     return if (!staten.directory?)
     
-    return if (@@seen.has_key?(staten.ino))
-    @@seen[staten.ino] = 1
+    return if ($seen.has_key?(staten.ino))
+    $seen[staten.ino] = 1
     
     entry = demangle(entry__.split(%r|/|).pop)
     ok = true
@@ -140,13 +140,13 @@ def recurse(entry__, staten)
         Dir.foreach(entry__) {
             |file|
             if (file.match(/inspelad.*CD/i))
-                @@skipped.push("skipping directory: " + entry__)
+                $skipped.push("skipping directory: " + entry__)
                 ok = false
                 break
             end
         }
     rescue
-        @@error.push("could not read directory '#{entry__}': #{$!}")
+        $error.push("could not read directory '#{entry__}': #{$!}")
         return
     end
     return if (!ok)
@@ -167,7 +167,7 @@ def recurse(entry__, staten)
         thisentry = File.join(entry__, filexx)
         staten2 = File.lstat(thisentry)
         if (staten2.directory?)
-            if (@@recurse)
+            if ($recurse)
                 recurse(thisentry, staten2)
             end
         else
@@ -178,7 +178,7 @@ def recurse(entry__, staten)
             if (filexxx.match(%r/(\A(\d|-)+)?\.?\s*(.*)\.flac/))
                 number, bulk = $1, $3
                 if (bulk.match(/(.+?)\s+-\s+(.+)/))
-                    if (@@song_before_artist) then song, artisten =  $1, $2 else artisten, song = $1 , $2 end
+                    if ($song_before_artist) then song, artisten =  $1, $2 else artisten, song = $1 , $2 end
                 else
                     artisten, song = nil, bulk
                 end
@@ -191,7 +191,7 @@ def recurse(entry__, staten)
                 artiste = (artisten || artist)
                 song.gsub!(slash_re, '/')
                 data = {}
-                if (!@@strip)
+                if (!$strip)
                     data["Title"] = song
                     data["Tracknumber"] = track.to_s unless number.nil?
                     data["Artist"] = artiste.gsub(slash_re, '/') if (artiste != nil)
@@ -209,23 +209,23 @@ ARGV.each {
     recurse(arg, staten)
 }
 
-@@has_comment.each {
+$has_comment.each {
     |entry|
     STDERR.puts entry
 }
 
-@@skipped.each {
+$skipped.each {
     |entry|
     STDERR.puts entry
 }
 
-@@skipped_files.each {
+$skipped_files.each {
     |entry|
     STDERR.puts entry
 }
 
 rv = 0
-@@error.each {
+$error.each {
     |entry|
     STDERR.puts entry
     rv = rv + 1

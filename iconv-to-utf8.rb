@@ -15,29 +15,29 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
-@@myprog = File.basename($0)
+$myprog = File.basename($0)
 
-@@dry_run = false
+$dry_run = false
 
 
 
-@@sc = SystemCommand.new
-@@sc.setVerbose(true)
+$sc = SystemCommand.new
+$sc.setVerbose(true)
 
-@@sc.setDryRun(@@dry_run)
+$sc.setDryRun($dry_run)
 
-@@tfconv = Tempfile.new(@@myprog)
-@@tfconv.close
+$tfconv = Tempfile.new($myprog)
+$tfconv.close
 
 def puts_command(cmd, args)
-    return @@sc.safeExec(cmd, args)
+    return $sc.safeExec(cmd, args)
 end
 
 def process(source)
-    puts_command("iconv", ['--verbose', '-f', 'iso88591', '-t', 'utf8', '-o', @@tfconv.path, source])
-    puts_command("chmod", ['--reference', source, @@tfconv.path])
+    puts_command("iconv", ['--verbose', '-f', 'iso88591', '-t', 'utf8', '-o', $tfconv.path, source])
+    puts_command("chmod", ['--reference', source, $tfconv.path])
     # puts_command("mv", [source, source + ".bak-iconv"])
-    puts_command("mv", [@@tfconv.path, source])
+    puts_command("mv", [$tfconv.path, source])
 end
 
 

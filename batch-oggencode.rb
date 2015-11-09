@@ -53,95 +53,95 @@ def calculateMaxThreads()
 end
 
 
-@@show_help = false
-@@out_dir = nil
-@@dry_run = false
-@@overwrite = false
-@@max_threads = calculateMaxThreads()
-@@find_dir = []
-@@find_pattern = '*.flac'
-@@find_maxdepth = nil
-@@find_mindepth = nil
-@@find_prune = nil
-@@flatten = false
-@@quality = nil
-@@verbose = false
-@@lame = false
-@@tag = false
-@@copy = false
-@@diff = false
-@@utility = nil
-@@nomangle = false
-@@toflac = false
-@@delete = false
-@@inplace = false
-@@verify_flac = false
+$show_help = false
+$out_dir = nil
+$dry_run = false
+$overwrite = false
+$max_threads = calculateMaxThreads()
+$find_dir = []
+$find_pattern = '*.flac'
+$find_maxdepth = nil
+$find_mindepth = nil
+$find_prune = nil
+$flatten = false
+$quality = nil
+$verbose = false
+$lame = false
+$tag = false
+$copy = false
+$diff = false
+$utility = nil
+$nomangle = false
+$toflac = false
+$delete = false
+$inplace = false
+$verify_flac = false
 
 opts.each {
     | opt, arg |
     if (opt == "--help")
-        @@show_help = true
+        $show_help = true
     elsif (opt == "--target-dir")
-        @@out_dir = arg
+        $out_dir = arg
     elsif (opt == "--in-place")
-        @@inplace = true
+        $inplace = true
     elsif (opt == "--dry-run")
-        @@dry_run = true
+        $dry_run = true
     elsif (opt == "--overwrite")
-        @@overwrite = true
+        $overwrite = true
     elsif (opt == "--threads")
-        @@max_threads = arg.to_i
+        $max_threads = arg.to_i
     elsif (opt == "--find-dir")
-        @@find_dir << arg
+        $find_dir << arg
     elsif (opt == "--find-pattern")
-        @@find_pattern = arg
+        $find_pattern = arg
     elsif (opt == "--find-maxdepth")
-        @@find_maxdepth = arg
+        $find_maxdepth = arg
     elsif (opt == "--find-mindepth")
-        @@find_mindepth = arg
+        $find_mindepth = arg
     elsif (opt == "--find-prune")
-        @@find_prune = arg
+        $find_prune = arg
     elsif (opt == "--flatten")
-        @@flatten = true
+        $flatten = true
     elsif (opt == "--quality")
-        @@quality = arg
+        $quality = arg
     elsif (opt == "--verbose")
-        @@verbose = true
+        $verbose = true
     elsif (opt == "--mp3")
-        @@lame = true
+        $lame = true
     elsif (opt == "--toflac")
-        @@toflac = true
+        $toflac = true
     elsif (opt == "--delete-after")
-        @@delete = true
+        $delete = true
     elsif (opt == "--utility")
-        @@utility = arg
+        $utility = arg
     elsif (opt == "--tag")
-        @@tag = true
+        $tag = true
     elsif (opt == "--verify-flac")
-        @@verify_flac = true
+        $verify_flac = true
     elsif (opt == "--no-mangle-filename")
-        @@nomangle = true
+        $nomangle = true
     end
 }
 
-if (!@@out_dir.nil? && @@inplace)
+if (!$out_dir.nil? && $inplace)
     puts "#{File.basename($0)}: --target-dir and --in-place are mutually exclusive"
     exit
 end
-if (@@out_dir.nil? && !@@verify_flac)
+if ($out_dir.nil? && !$verify_flac)
     begin 
         if (ARGV.length > 0 && File.stat(ARGV[ARGV.length - 1]).directory?)
-            @@out_dir = ARGV.pop
+            $out_dir = ARGV.pop
         end
     rescue
     end
-    if (@@out_dir.nil? && !@@inplace)
+    if ($out_dir.nil? && !$inplace)
         puts "#{File.basename($0)}: no target directory given, use --target-dir or --in-place"
         exit
     end
 end
 
-@@usage = <<END_USAGE
+$usage = <<END_USAGE
 usage 1:
     #{File.basename($0)} [options] file-list target-directory
         Example: "#{File.basename($0)} *.flac /media/iPod/flac"
@@ -159,7 +159,7 @@ arguments to --utility:
 Potentially problematic characters in filenames are converted to a safe target representation; use the --no-mangle-filename option to disable this behavior.
 END_USAGE
 
-if ((ARGV.length < 1 && @@find_dir.length == 0) || @@show_help)
+if ((ARGV.length < 1 && $find_dir.length == 0) || $show_help)
 
     options_string = "Options:\n"
     options_array =[]
@@ -169,44 +169,44 @@ if ((ARGV.length < 1 && @@find_dir.length == 0) || @@show_help)
     }
     options_string += options_array.join("\n")
 
-    puts @@usage
+    puts $usage
     puts options_string
     exit
 end
 
-if (ARGV.length > 0 && @@find_dir.length > 0)
+if (ARGV.length > 0 && $find_dir.length > 0)
     puts "Error: file list and --find-dir are mutually exclusive!"
-    puts @@usage
+    puts $usage
     exit 1
 end
 
-if (@@utility != nil && @@lame)
+if ($utility != nil && $lame)
     puts "Error: --utility and --lame are mutually exclusive!"
-    puts @@usage
+    puts $usage
     exit 1
 end
 
-if (@@utility != nil)
-    if (@@utility == "copy")
-        @@copy = true
-    elsif (@@utility == "diff" || @@utility == "cmp")
-        @@diff = true
+if ($utility != nil)
+    if ($utility == "copy")
+        $copy = true
+    elsif ($utility == "diff" || $utility == "cmp")
+        $diff = true
     else
-        puts "invalid utility: " + @@utility
-        puts @@usage
+        puts "invalid utility: " + $utility
+        puts $usage
         exit 1
     end
 end
 
-@@sc = SystemCommand.new
-@@sc.setVerbose(true)
-@@sc.setDryRun(@@dry_run)
+$sc = SystemCommand.new
+$sc.setVerbose(true)
+$sc.setDryRun($dry_run)
 
-@@sc_silent = @@sc.dup
-@@sc_silent.setVerbose(@@verbose)
+$sc_silent = $sc.dup
+$sc_silent.setVerbose($verbose)
 
 def puts_command(cmd, args)
-    return @@sc.safeExec(cmd, args)
+    return $sc.safeExec(cmd, args)
 end
 
 def stripIllegal(filename)
@@ -220,10 +220,10 @@ def stripIllegal(filename)
     return [stripped, legal]
 end
 
-@@created_dir_mutex = Mutex.new
-@@created_dirs = {}
-@@temp_files = {}
-@@targets = {}
+$created_dir_mutex = Mutex.new
+$created_dirs = {}
+$temp_files = {}
+$targets = {}
 
 def make_dirs(sourcen, reldir = nil)
     source = reldir.nil? ? sourcen: AutarkFileUtils::make_relative(sourcen, reldir)
@@ -231,23 +231,23 @@ def make_dirs(sourcen, reldir = nil)
     fi = File.split(source)
     source_dir = fi[0]
 
-    if (@@flatten || (source_dir[0..0] == '/' && reldir.nil?))
+    if ($flatten || (source_dir[0..0] == '/' && reldir.nil?))
         source_dir = (dirs = source_dir.split('/')).empty? ? '' : dirs.last
     end
 
-    @@created_dir_mutex.synchronize {
-        cached_dir = @@created_dirs[source_dir]
+    $created_dir_mutex.synchronize {
+        cached_dir = $created_dirs[source_dir]
         if (cached_dir != nil) then return cached_dir end
 
-        relative = AutarkFileUtils::make_relative(@@out_dir,source_dir)
-        target_dir = relative[0..0] == '/' ? relative : File.join(@@out_dir, relative)
+        relative = AutarkFileUtils::make_relative($out_dir,source_dir)
+        target_dir = relative[0..0] == '/' ? relative : File.join($out_dir, relative)
 
         if (!FileTest.exists?(target_dir))
-            @@sc_silent.safeExec("mkdir", ['-p', target_dir])
+            $sc_silent.safeExec("mkdir", ['-p', target_dir])
         end
 
         file_exists = FileTest.exists?(target_dir)
-        if (not file_exists and not @@dry_run)
+        if (not file_exists and not $dry_run)
             fail "target-directory '#{target_dir}' does not exist"
         end
 
@@ -258,76 +258,76 @@ def make_dirs(sourcen, reldir = nil)
             end
         end
 
-        @@created_dirs[source_dir] = target_dir
+        $created_dirs[source_dir] = target_dir
         return target_dir
     }
 end
 
-@@sc_touch = @@sc_silent.dup
-@@sc_touch.failSoft(true)
+$sc_touch = $sc_silent.dup
+$sc_touch.failSoft(true)
 
 def do_touch(reference, target)
-    @@sc_touch.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
+    $sc_touch.safeExec("touch", ['--no-create', "--reference=#{reference}", target])
 end
 
-@@exists = 0
-@@converted = 0
-@@badnames = []
+$exists = 0
+$converted = 0
+$badnames = []
 
 def process__(job, source, *args)
-    if (@@verify_flac)
+    if ($verify_flac)
         args = ['-t', '-s', source]
         puts_command("flac", args)
-        @@thread_mutex.synchronize {@@converted += 1}
+        $thread_mutex.synchronize {$converted += 1}
         return
     end
     stripped = stripIllegal(source)
     safesource = stripped[0]
-    if (@@nomangle && !stripped[1])
-        @@badnames << source
+    if ($nomangle && !stripped[1])
+        $badnames << source
         safesource = source
     end
     
-    if (@@inplace)
-        @@out_dir = File.split(source)[0]
+    if ($inplace)
+        $out_dir = File.split(source)[0]
     end
 
     File.basename(safesource).match(/(.+)(\.[^.]*)/)
     base = $1
     target_dir = make_dirs(safesource, *args)
 
-    target = File.join(target_dir, @@utility != nil ? File.basename(safesource) : base + (@@lame ? ".mp3" : (@@toflac ? ".flac" : ".ogg")))
+    target = File.join(target_dir, $utility != nil ? File.basename(safesource) : base + ($lame ? ".mp3" : ($toflac ? ".flac" : ".ogg")))
     target = File.expand_path(target)
 
     exists = FileTest.exists?(target)
     instat = File.stat(source)
     outstat = exists ? File.stat(target) : nil
-    overwrite = @@overwrite
+    overwrite = $overwrite
     if (exists && (instat.ino == outstat.ino))
         STDERR.puts("input and output files are the same file")
         overwrite = false
     end
 
-    if (not exists or (overwrite or @@diff) or (outstat.mtime + 2) < instat.mtime)     # the "+ 2" is to compensate for minor time differences on some file systems
+    if (not exists or (overwrite or $diff) or (outstat.mtime + 2) < instat.mtime)     # the "+ 2" is to compensate for minor time differences on some file systems
         p [outstat.mtime, instat.mtime] if exists
-        @@thread_mutex.synchronize {@@targets[job] = target}
+        $thread_mutex.synchronize {$targets[job] = target}
 
         can_delete = false
-        if (@@diff)
+        if ($diff)
             args = [source, target]
             puts_command("cmp", args)
-        elsif (@@copy)
+        elsif ($copy)
             args = ["-ptog", source, target]
-            args.unshift('-v') if (@@verbose)
+            args.unshift('-v') if ($verbose)
             puts_command("rsync", args)
             can_delete = true
         else
             target_tmp = target + ".tmp" # work on a temporary file
-            @@created_dir_mutex.synchronize {@@temp_files[target_tmp] = 1}
-            if (@@lame)
+            $created_dir_mutex.synchronize {$temp_files[target_tmp] = 1}
+            if ($lame)
                 mf_args = [source, '--export-tags-to=-']
                 tag_args = []
-                @@sc_silent.execReadPipe("metaflac", mf_args) {
+                $sc_silent.execReadPipe("metaflac", mf_args) {
                     |fh|
                     fh.each_line {
                         |line|
@@ -342,84 +342,84 @@ def process__(job, source, *args)
                     }
                 }
 
-                lame_args = ['-q', (@@quality || '2'), tag_args, "-", target_tmp]
-                lame_args << '--quiet' if (!@@verbose)
+                lame_args = ['-q', ($quality || '2'), tag_args, "-", target_tmp]
+                lame_args << '--quiet' if (!$verbose)
 
-                @@sc.execReadPipe("flac", ["-s", "-c", "-d", source]) {
+                $sc.execReadPipe("flac", ["-s", "-c", "-d", source]) {
                     |outpipe|
-                    @@sc.execReadPipe("lame", lame_args.flatten, outpipe) {
+                    $sc.execReadPipe("lame", lame_args.flatten, outpipe) {
                     }
                 }
-            elsif (@@toflac)
-                args = [source, '-f', '--preserve-modtime', '-o', target_tmp, '-s', ('-' + (@@quality || '-best'))]
+            elsif ($toflac)
+                args = [source, '-f', '--preserve-modtime', '-o', target_tmp, '-s', ('-' + ($quality || '-best'))]
 
                 puts_command("flac", args)
                 can_delete = true
             else
-                ogg_args = [source, '-o', target_tmp, '-q', (@@quality || '5')]
-                ogg_args << '--quiet' if (!@@verbose)
+                ogg_args = [source, '-o', target_tmp, '-q', ($quality || '5')]
+                ogg_args << '--quiet' if (!$verbose)
 
                 puts_command("oggenc", ogg_args)
             end
             do_touch(source, target_tmp)
             puts_command("mv", [target_tmp, target]) # now is the time to commit the change
-            @@created_dir_mutex.synchronize {@@temp_files.delete(target_tmp)}
+            $created_dir_mutex.synchronize {$temp_files.delete(target_tmp)}
         end
-        if (@@delete && can_delete)
+        if ($delete && can_delete)
             puts_command("rm", [source])
         end
         
-        @@thread_mutex.synchronize {
-            @@converted += 1
-            @@targets.delete(job)
+        $thread_mutex.synchronize {
+            $converted += 1
+            $targets.delete(job)
         }
     else
         puts "don't overwrite: " + target
-        @@thread_mutex.synchronize {@@exists += 1}
+        $thread_mutex.synchronize {$exists += 1}
     end
 end
-@@target_count = 0
+$target_count = 0
 
-@@thread_count = 0
-@@thread_mutex = Mutex.new
-@@thread_condition = ConditionVariable.new
-@@jobs_done = 0
-@@jobs_ok = 0
-@@jobs_total = 0
+$thread_count = 0
+$thread_mutex = Mutex.new
+$thread_condition = ConditionVariable.new
+$jobs_done = 0
+$jobs_ok = 0
+$jobs_total = 0
 
-if (@@max_threads < 1)
-    @@max_threads = 1
+if ($max_threads < 1)
+    $max_threads = 1
 end
 
-@@interrupted = false
-trap("INT") { @@interrupted = true }
+$interrupted = false
+trap("INT") { $interrupted = true }
 
 class MyExc < Exception
 end
 
 def process(source, *args)
-    @@thread_mutex.synchronize {
-        @@jobs_total += 1
+    $thread_mutex.synchronize {
+        $jobs_total += 1
 
-        while (@@thread_count >= @@max_threads)
-            @@thread_condition.wait(@@thread_mutex)
-            raise MyExc.new if @@interrupted
+        while ($thread_count >= $max_threads)
+            $thread_condition.wait($thread_mutex)
+            raise MyExc.new if $interrupted
         end
         
         Thread.new {
             job = nil
-            @@thread_mutex.synchronize {
-                @@thread_count += 1
-                job = @@jobs_total
-                puts "Job #{job}/#{@@target_count} start..."
+            $thread_mutex.synchronize {
+                $thread_count += 1
+                job = $jobs_total
+                puts "Job #{job}/#{$target_count} start..."
             }
             begin
                 process__(job, source, *args)
-                @@thread_mutex.synchronize {@@jobs_ok +=1;}
+                $thread_mutex.synchronize {$jobs_ok +=1;}
             ensure
-                @@thread_mutex.synchronize {
-                    @@jobs_done += 1; @@thread_count -= 1; @@thread_condition.signal
-                    puts "Job #{job} finished, #{@@target_count - @@jobs_done}/#{@@target_count} remaining."
+                $thread_mutex.synchronize {
+                    $jobs_done += 1; $thread_count -= 1; $thread_condition.signal
+                    puts "Job #{job} finished, #{$target_count - $jobs_done}/#{$target_count} remaining."
                 }
             end
             }.run
@@ -440,8 +440,8 @@ def process_filename(f, *args)
     end
 end
 
-if (@@find_dir.empty?)
-    @@find_dir << ['.']
+if ($find_dir.empty?)
+    $find_dir << ['.']
 end
 
 begin
@@ -451,25 +451,25 @@ begin
         file_list = ARGV.collect {
             |f| [f, '.']
         }
-    elsif (@@find_pattern.length > 0)
+    elsif ($find_pattern.length > 0)
         sc = SystemCommand.new
         sc.setVerbose
         
         file_list = []
 
-        @@find_dir.each {
+        $find_dir.each {
             |dir|
-            if (@@tag)
-                sc.safeExec('batch-tag-flac.rb', [dir, (@@dry_run ? '--dry-run' : nil)].compact)
+            if ($tag)
+                sc.safeExec('batch-tag-flac.rb', [dir, ($dry_run ? '--dry-run' : nil)].compact)
             end
             find_args = [dir]
-            if (!@@find_maxdepth.nil?)
-                find_args.concat(['-maxdepth', @@find_maxdepth])
+            if (!$find_maxdepth.nil?)
+                find_args.concat(['-maxdepth', $find_maxdepth])
             end
-            if (!@@find_mindepth.nil?)
-                find_args.concat(['-mindepth', @@find_mindepth])
+            if (!$find_mindepth.nil?)
+                find_args.concat(['-mindepth', $find_mindepth])
             end
-            prune_arg = (!@@find_prune.nil?) ? ['-name', @@find_prune, '-prune', '-o'] : []
+            prune_arg = (!$find_prune.nil?) ? ['-name', $find_prune, '-prune', '-o'] : []
 
             base_dir = dir
 
@@ -480,7 +480,7 @@ begin
                 base_dir = File.join(base_dir)
             end
 
-            find_args.concat [prune_arg, '-xtype', 'f', '-name', @@find_pattern, '-print0']
+            find_args.concat [prune_arg, '-xtype', 'f', '-name', $find_pattern, '-print0']
             sc2 = sc.dup
             sc2.failSoft(true) # we want to handle all files we can, even though some directories may not be readable
             sc2.execReadPipe('find', find_args.flatten) {
@@ -503,7 +503,7 @@ begin
         puts("\nNumber of files found: #{file_list.size}")
     end
 
-    if (@@delete)
+    if ($delete)
         file_list.each {
             |f|
             puts f[0].inspect
@@ -515,50 +515,50 @@ begin
         end
     end
 
-    @@target_count = file_list.size
+    $target_count = file_list.size
     file_list.each {
         |f|
         process_filename(*f)
     }
 
 
-    if (@@max_threads > 0)
-        @@thread_mutex.synchronize {
-            while (@@jobs_total > @@jobs_done)
-                @@thread_condition.wait(@@thread_mutex)
-                raise MyExc.new if @@interrupted
+    if ($max_threads > 0)
+        $thread_mutex.synchronize {
+            while ($jobs_total > $jobs_done)
+                $thread_condition.wait($thread_mutex)
+                raise MyExc.new if $interrupted
             end
         }
 
         Thread.list {|thread| thread.join}
     end
 rescue Exception
-    @@created_dir_mutex.synchronize {
-        @@temp_files.each_key {
+    $created_dir_mutex.synchronize {
+        $temp_files.each_key {
             |filename| puts_command("rm", [filename])
         }
     }
     exit 1
 end
 
-if (@@exists > 0)
-    puts "\n#{File.basename($0)}: Not overwritten: #{@@exists}"
+if ($exists > 0)
+    puts "\n#{File.basename($0)}: Not overwritten: #{$exists}"
 end
-if (@@converted > 0)
-    puts "\n#{File.basename($0)}: Sucessfully processed #{@@converted} file#{if (@@converted != 1) then 's' end}#{if (@@dry_run) then ' (DRY RUN)' end}."
+if ($converted > 0)
+    puts "\n#{File.basename($0)}: Sucessfully processed #{$converted} file#{if ($converted != 1) then 's' end}#{if ($dry_run) then ' (DRY RUN)' end}."
 end
 
-failure_count = @@jobs_total - @@jobs_ok;
+failure_count = $jobs_total - $jobs_ok;
 if (failure_count > 0)
     puts "\n#{File.basename($0)}: Number of failures: #{failure_count}"
 end
 
 STDOUT.flush
 
-@@targets.keys.sort.each {
-    |failed_job| STDERR.puts "FAILED: " + @@targets[failed_job]
+$targets.keys.sort.each {
+    |failed_job| STDERR.puts "FAILED: " + $targets[failed_job]
 }
 
-@@badnames.each {
+$badnames.each {
     |badname| STDERR.puts "BAD FILENAME: " + badname
 }

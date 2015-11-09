@@ -5,9 +5,9 @@ $:.unshift(File.split($0)[0])
 require "SystemCommand"
 require "fileutils"
 
-@@sysc = SystemCommand.new
-@@sysc.setDryRun(false)
-@@sysc.setVerbose(false)
+$sysc = SystemCommand.new
+$sysc.setDryRun(false)
+$sysc.setVerbose(false)
 
 def recurse(dir)
     Dir.foreach(dir) {
@@ -30,8 +30,8 @@ def recurse(dir)
                 files.push(File.join(entry, filexx)) if (filexx.match(%r|\.flac\Z|))
             } 
             if (!files.empty?)
-                @@sysc.safeExec(File.join(File.split(File.expand_path($0))[0], 'adjust_flac_freq.rb'), ['--D33', '-e', '44100', '--replace', '--nobackup'] + files)
-                @@sysc.safeExec('touch', [File.join(entry, 'Saktad i batch')])
+                $sysc.safeExec(File.join(File.split(File.expand_path($0))[0], 'adjust_flac_freq.rb'), ['--D33', '-e', '44100', '--replace', '--nobackup'] + files)
+                $sysc.safeExec('touch', [File.join(entry, 'Saktad i batch')])
             end
         end
     }
