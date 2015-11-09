@@ -21,9 +21,6 @@ excludes = %w(
 *~
 ) + ["#*"]
 
-tmp = %w(
-)
-
 options = { 
     "--dry-run" => 1,
     "--perms" => 1,

@@ -216,7 +216,7 @@ for_each_file = proc {
             |rd|
             process_flac.call(rd)
         }
-    rescue MyException => exception
+    rescue MyException
         exit(1)
     end
 
