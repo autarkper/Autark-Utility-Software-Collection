@@ -400,26 +400,27 @@ end
 def process(source, *args)
     $thread_mutex.synchronize {
         $jobs_total += 1
+        job = $jobs_total
 
         while ($thread_count >= $max_threads)
             $thread_condition.wait($thread_mutex)
             raise MyExc.new if $interrupted
         end
         
+        $thread_count += 1
+        puts "Job #{job}/#{$target_count} start..."
+
         Thread.new {
-            job = nil
-            $thread_mutex.synchronize {
-                $thread_count += 1
-                job = $jobs_total
-                puts "Job #{job}/#{$target_count} start..."
-            }
+            success = false;
             begin
                 process__(job, source, *args)
-                $thread_mutex.synchronize {$jobs_ok +=1;}
+                success = true;
             ensure
                 $thread_mutex.synchronize {
-                    $jobs_done += 1; $thread_count -= 1; $thread_condition.signal
+                    $jobs_ok +=1 if (success)
+                    $jobs_done += 1; $thread_count -= 1;
                     puts "Job #{job} finished, #{$target_count - $jobs_done}/#{$target_count} remaining."
+                    $thread_condition.signal
                 }
             end
             }.run
