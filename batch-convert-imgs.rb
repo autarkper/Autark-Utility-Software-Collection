@@ -326,8 +326,12 @@ def identify(source)
         id = sc.execBackTick('file', ['--dereference', source])
         return id.scan(/\s+(\d+)\s+x\s+(\d+)/)[0]
     else
-        id = sc.execBackTick('identify', [source])
-        return id.scan(/\s+(\d+)x(\d+)/)[0]
+        $thread_mutex.synchronize {
+            # it looks like there is a problem with many threads simultaneously executing 'identify':
+            # the process just seems to hang for ever
+            id = sc.execBackTick('identify', [source])
+            return id.scan(/\s+(\d+)x(\d+)/)[0]
+        }
     end
 end
 
