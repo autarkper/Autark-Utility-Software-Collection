@@ -455,56 +455,46 @@ if ($max_threads < 1)
 end
 
 def no_more_jobs()
-    return $all_jobs_started && $jobs_total == $jobs_done
+    return $all_jobs_started && $target_count == $jobs_done
+end
+
+$target_count = 0
+$jobs_done = 0
+$jobs_ok = 0
+$jobs_total = 0
+$interrupted = false
+trap("INT") { $interrupted = true }
+
+class MyExc < Exception
 end
 
 def process(*args)
     $thread_mutex.synchronize {
-        $job_queue.push(args)
-        $thread_condition.signal
+        $jobs_total += 1
+        job = $jobs_total
 
-        if ($thread_count < $max_threads)
-            $thread_count += 1
-            Thread.new {
-                begin
-                    while (true)
-                        job_number = 0
-                        arguments = nil
-                        $thread_mutex.synchronize {
-                            while ($job_queue.size == 0 && !no_more_jobs())
-                                $thread_condition.wait($thread_mutex)
-                            end
-                            if (!no_more_jobs())
-                                arguments = $job_queue.shift
-                                job_number = $jobs_started += 1
-                                puts "Starting job #{job_number}/#{$jobs_total}: #{arguments[0]}" # if ($verbose)
-                            end
-                        } # synch
-                        break if (job_number == 0)
+        while ($thread_count >= $max_threads)
+            $thread_condition.wait($thread_mutex)
+            raise MyExc.new if $interrupted
+        end
 
-                        skipped = false
-                        failed = false
-                        begin
-                            skipped = !process__(*arguments)
-                        rescue Exception => obj
-                            p obj
-                            failed = true
-                        ensure
-                            $thread_mutex.synchronize {
-                                if ($verbose)
-                                  puts "Finished job #{job_number}#{skipped ? ' (skipped)':''}"
-                                end
-                                $jobs_done += 1
-                                $jobs_skipped += 1 if (skipped)
-                                $jobs_failed << arguments[0] if (failed)
-                            }
-                        end
-                    end # while
-                ensure
-                    $thread_mutex.synchronize {$thread_count -= 1;$thread_condition.broadcast}
-                end
+        $thread_count += 1
+        puts "Job #{job}/#{$target_count} start: " + args[0]
+
+        Thread.new {
+            success = false;
+            begin
+                process__(*args)
+                success = true;
+            ensure
+                $thread_mutex.synchronize {
+                    $jobs_ok +=1 if (success)
+                    $jobs_done += 1; $thread_count -= 1;
+                    puts "Job #{job} finished, #{$target_count - $jobs_done}/#{$target_count} remaining."
+                    $thread_condition.broadcast
+                }
+            end
             }.run
-        end # end
         }
 end
 
@@ -519,6 +509,7 @@ def process_filename(f, reldir = nil)
             $found_count += 1
             process( f, reldir )
         else
+            $target_count -= 1
             $stderr.puts "'#{f}': zero-length file"
         end
     else
@@ -540,24 +531,24 @@ if ($find_pattern.length > 0)
             list << f
         }
     }
-    $jobs_total = list.size
+    $target_count = list.size
     list.each {
         |f|
         process_filename(f, $find_dir)
     }
 else
-    $jobs_total = ARGV.size
+    $target_count = ARGV.size
     ARGV.each {
         |f|
         process_filename(f, $out_dir)
     }
 end
 
-raise "strange" if ($found_count != $jobs_total)
+raise "strange" if ($found_count != $target_count)
 
 $thread_mutex.synchronize {
     $all_jobs_started = true
-    while ($jobs_total > $jobs_done)
+    while ($target_count > $jobs_done)
         $thread_condition.wait($thread_mutex)
     end
 
