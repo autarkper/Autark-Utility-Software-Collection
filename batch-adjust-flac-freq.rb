@@ -1,8 +1,6 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-
-require "SystemCommand"
+require_relative "SystemCommand"
 require "fileutils"
 
 $sysc = SystemCommand.new

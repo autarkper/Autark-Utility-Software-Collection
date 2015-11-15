@@ -1,9 +1,7 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-
-require "AutarkFileUtils"
-require "SystemCommand"
+require_relative "AutarkFileUtils"
+require_relative "SystemCommand"
 
 require 'getoptlong'
 

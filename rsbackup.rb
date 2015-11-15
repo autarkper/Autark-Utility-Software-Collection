@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -w
-$:.unshift(File.split($0)[0])
 
-require "SystemCommand"
+require_relative "SystemCommand"
 
 usage = <<ENDS
 usage: #{$0}: dir [,dir] --target target-dir

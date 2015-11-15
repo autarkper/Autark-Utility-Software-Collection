@@ -1,10 +1,8 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-
-require "SystemCommand"
-require "AutarkFileUtils"
-require "ExifToolUtils"
+require_relative "SystemCommand"
+require_relative "AutarkFileUtils"
+require_relative "ExifToolUtils"
 
 require 'getoptlong'
 require 'thread'

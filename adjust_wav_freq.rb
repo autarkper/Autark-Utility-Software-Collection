@@ -1,7 +1,5 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-
 require 'getoptlong'
 
 options = [

@@ -1,11 +1,9 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-
 require 'getoptlong'
 
-require "SystemCommand"
-require "ExifToolUtils"
+require_relative "SystemCommand"
+require_relative "ExifToolUtils"
 
 options = [
     ["--help", "-h", GetoptLong::NO_ARGUMENT ],

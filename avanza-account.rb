@@ -1,7 +1,5 @@
 #!/usr/bin/ruby -wE:utf-8
 
-$:.unshift(File.split($0)[0])
-
 require 'getoptlong'
 
 SALE = "Försäljning"

@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -w
-$:.unshift(File.split($0)[0])
 
-require "SystemCommand"
+require_relative "SystemCommand"
 
 ($basedir = File.join("/tmp", "relocate_test_tmpdir")).freeze
 

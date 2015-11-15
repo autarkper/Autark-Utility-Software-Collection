@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -w
 
-$:.unshift(File.split($0)[0])
-require "AutarkFileUtils"
+require_relative "AutarkFileUtils"
 
 def tester(test_sources, target)
     test_sources.each {

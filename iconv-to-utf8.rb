@@ -2,7 +2,7 @@
 
 $:.push(File.split($0)[0])
 
-require "SystemCommand"
+require_relative "SystemCommand"
 
 require 'getoptlong'
 require 'thread'
