@@ -418,7 +418,7 @@ def process(source, *args)
                     $jobs_ok +=1 if (success)
                     $jobs_done += 1; $thread_count -= 1;
                     puts "Job #{job} finished, #{$target_count - $jobs_done}/#{$target_count} remaining."
-                    $thread_condition.signal
+                    $thread_condition.broadcast
                 }
             end
             }.run
