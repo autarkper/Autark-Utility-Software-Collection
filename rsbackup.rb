@@ -104,6 +104,7 @@ elsif (!$dobackup)
     end
 end
 
+$errors = 0
 def execute(command, args)
     
     logfileh = nil
@@ -150,6 +151,7 @@ def execute(command, args)
     poll_stderr = proc {
         while ((fhs = select([rd], nil, nil, 0)) != nil && fhs[0] != nil)
             line2 = rd.gets()
+            $errors = $errors + 1;
             output.call("STDERR: " + line2)
         end
     }
@@ -173,6 +175,7 @@ def execute(command, args)
         end
     }
     poll_stderr.call()
+    if ($errors != 0) then output.call("There were warnings or errors: #{$errors}") end
     if (ret != 0) then output.call("\nrsync returned non-zero: " + ret.to_s) end
 
     logfileh.close()
