@@ -154,6 +154,7 @@ def execute(command, args)
         end
     }
 
+    now = Time.new.to_i
     ret = sh.execReadPipe(command, args) {
         | pipe |
         begin
@@ -163,7 +164,10 @@ def execute(command, args)
                 output.call("    " + line )
                 poll_stderr.call()
             }
-            output.call "...................................................rsync done"            
+            output.call "...................................................rsync done"
+            later = Time.new.to_i
+            seconds = later - now
+            output.call "Execution time: #{seconds} seconds"
         rescue Exception => e
             puts e
         end
