@@ -2,9 +2,11 @@
 
 require 'getoptlong'
 
-SALE = "Försäljning"
-BUY = "Inköp"
-DIVIDEND = "Utdelning"
+SALE = "Sälj"
+BUY = "Köp"
+DIVIDEND = "Utd"
+DEPOSIT = "Ins"
+WITHDRAWAL = "Utt"
 
 options = [
     ]
@@ -12,6 +14,7 @@ options = [
 opts = GetoptLong.new()
 opts.set_options(*options)
 
+$___ = "\t"
 $file = nil
 if (ARGV.length > 0)
     $file = ARGV[0]
@@ -75,9 +78,11 @@ $rows.reverse.each {
     $account = cols[1]
     if (type =~ /Ins.ttning/)
         $deposits += value.to_f
+        $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value)
     end
     if (type =~ /Uttag/)
         $withdrawn -= value.to_f
+        $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value)
     end
     buy = false
     sell = false
@@ -137,17 +142,23 @@ $rows.reverse.each {
     end
 }
 puts "Konto: #{$account}"
-puts "Insättningar: #{$deposits}, Uttag: #{$withdrawn}, netto: #{netdep = $deposits - $withdrawn}"
-puts "Köpt: #{rounda($bought, 100)}, Sålt: #{rounda($sold, 100)}"
-puts "Utdelningar: #{$dividends}, Prelskatt: #{$prelskatt}"
+puts "Insättningar: #{$deposits}#{$___}Uttag: #{$withdrawn}#{$___}netto: #{netdep = $deposits - $withdrawn}"
+puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}"
+puts "Utdelningar: #{$dividends}#{$___}Prelskatt: #{$prelskatt}"
 puts "Övrigt: #{$other}"
+puts
 
 $Transactions.each {
     |trans|
-    pnl = trans.pnl == 0 ? "" : ", PnL: #{round(trans.pnl)}"
-    acqp = (trans.acqp == 0) ? "" : ", Ansk.pris: #{round(trans.acqp)}"
-    puts "[#{trans.type}] Datum: #{trans.date}, Papper: \"#{trans.paper}\", Antal: #{rounda(trans.amount, 10000)}, Pris: #{round(trans.price)}, Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+    if (trans.paper != nil)
+        pnl = trans.pnl == 0 ? "" : "#{$___}PnL: #{round(trans.pnl)}"
+        acqp = (trans.acqp == 0) ? "" : "#{$___}Ansk.pris: #{round(trans.acqp)}"
+        puts "[#{trans.type}] Datum: #{trans.date}#{$___}Papper: \"#{trans.paper}\"#{$___}Antal: #{rounda(trans.amount, 10000)}#{$___}Pris: #{round(trans.price)}#{$___}Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+    else
+        puts "[#{trans.type}] Datum: #{trans.date}#{$___}Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+    end
 }
+puts
 
 netbought = $bought - $sold
 $pnl = 0
@@ -164,13 +175,13 @@ $papers.sort{|a, b|
     }.each {
     |name, paper|
     $pnl = $pnl + paper.pnl
-    pnl = (paper.pnl == 0) ? "" : ", PnL: #{round(paper.pnl)}"
+    pnl = (paper.pnl == 0) ? "" : "#{$___}PnL: #{round(paper.pnl)}"
     divpercent = paper.value == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
-    dividends = (paper.dividends == 0) ? "" : ", Utdelningar: #{round(paper.dividends)}" + divpercent
+    dividends = (paper.dividends == 0) ? "" : "#{$___}Utdelningar: #{round(paper.dividends)}" + divpercent
     if (paper.amount != 0)
         vikt = paper.value/(netbought + $pnl0) * 100
         $vikt += vikt
-        puts "Papper: \"#{name}\", Antal: #{rounda(paper.amount, 10000)}, Värde: #{round(paper.value)}, Vikt: #{rounda(vikt, 100)}%, Ansk.pris: #{round(paper.value/paper.amount)}, Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
+        puts "Papper: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Värde: #{round(paper.value)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         $value = $value + paper.value
     end
 }
@@ -185,6 +196,7 @@ if (round(v2 = netbought + $pnl) != round($value))
 end
 
 $pnlpercent = $deposits != 0 ? $pnl / $deposits * 100 : 0
+puts
 puts "Totalt investerat: #{rounda($value, 100)}, Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
 puts "Kassa: #{rounda(cash = netdep - netbought + $dividends - $prelskatt + $other, 100)}"
 puts "Kassa + investerat: #{rounda($value + cash, 100)}"
