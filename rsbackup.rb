@@ -81,20 +81,25 @@ opts.each {
 $bBatchMode = $bDryRun || $bBatchMode
 
 if ($target == nil)
-    puts usage
+    STDERR.puts usage
     exit
 end
 
 if (ARGV.length < 1)
-    puts usage
+    STDERR.puts usage
+    exit
+end
+
+if (ARGV.length > 1)
+    STDERR.puts "can only handle one source directory at a time"
     exit
 end
 
 if (!$init)
     if ($bDryRun)
-        puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
+        STDERR.puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
     elsif (!$dobackup)
-        puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
+        STDERR.puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
         input = STDIN.gets.chomp
         if (input != "No backup")
             exit 0
@@ -103,8 +108,7 @@ if (!$init)
 end
 
 $errors = 0
-def execute(command, args)
-    
+def execute(command, source, target, argsin)
     logfileh = nil
     if (!$bDryRun)
         begin
@@ -115,7 +119,7 @@ def execute(command, args)
         end
     end
 
-    output = proc {
+    output = lambda {
         |line|
         STDOUT.puts line
         STDOUT.flush
@@ -123,13 +127,19 @@ def execute(command, args)
             logfileh.puts(line)
             logfileh.flush()
         end
-        }
-    output.call "\nTarget directory: " + $hardtarget
-    output.call "Backup directory: " + $backup_dir
+    }
+    output.call "\nSource directory: " + source
+    output.call "Target directory: " + target
+    if ($dobackup)
+        output.call "Backup directory: " + $backup_dir
+    end
     output.call "Log file: " + $logfile
+    dirs = [source, target]
+    args = argsin + dirs
     output.call "Command:\nrsync " + args.join( ' ' )
     if (!$bBatchMode && STDERR.isatty)
         STDOUT.flush
+        STDERR.flush
         STDERR.puts "\nOK? (Press CTRL+C to abort.)"
         begin        
             STDIN.gets
@@ -146,7 +156,7 @@ def execute(command, args)
     rd, wr = IO.pipe
     STDERR.reopen(wr)
 
-    poll_stderr = proc {
+    poll_stderr = lambda {
         while ((fhs = select([rd], nil, nil, 0)) != nil && fhs[0] != nil)
             line2 = rd.gets()
             $errors = $errors + 1;
@@ -169,7 +179,7 @@ def execute(command, args)
             seconds = later - now
             output.call "Execution time: #{seconds} seconds"
         rescue Exception => e
-            puts e
+            STDERR.puts e
         end
     }
     poll_stderr.call()
@@ -179,86 +189,76 @@ def execute(command, args)
     logfileh.close()
 end
 
-dirs = {}
+dir = File.expand_path(ARGV[0])
+stat = File.stat(dir)
+if ( !stat.directory? )
+    STDERR.puts dir + ": path is not a directory"
+    exit 1
+end
+if ( !stat.owned? )
+    STDERR.puts dir + ": you do not own this path"
+    exit 1
+end
 
-ARGV.each {
-    | dir |
-    if dirs.has_key?(File.expand_path(dir))
-        puts "repeated directory: " + dir
-        exit 1
-    end
-    if ( dir.dup.chomp!("/") != nil )
-        puts dir + ": give directory name only, without trailing '/'"
-        exit 1
-    end
-    
-    if ( dir[0,1] != "/" )
-        puts dir + ": path must be absolute, not relative"
-        exit 1
-    end
-    if ( ! File.stat(dir).directory? )
-        puts dir + ": path is not a directory"
-        exit 1
-    end
-    dirs[File.expand_path(dir)] = 1
-}
-ARGV.each {
-    | dir |
-    dir = File.expand_path(dir)
-    reldir = dir[1, dir.length]
-    target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('@@')))
+reldir = dir[1, dir.length]
+target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('@@')))
 
+if ($dobackup)
     if (!FileTest.exists?(target_base))
         if ($init)
             sc = SystemCommand.new
             sc.safeExec('mkdir', ['-p', target_base])
         else
-            puts "backup directory #{target_base} does not exist, run with --init if you wish to create it."
+            STDERR.puts "backup directory #{target_base} does not exist, run with --init if you wish to create it."
             exit
         end
     end
-    backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
-    $backup_dir = File.join(target_base, backup_suffix)
-    $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('@@'))) + "-log" + backup_suffix
-    $hardtarget = File.expand_path(File.join($target, reldir, ".."))
-    
-    if (!FileTest.exists?($hardtarget))
-        if ($init)
-            sc = SystemCommand.new
-            sc.safeExec('mkdir', ['-p', $hardtarget])
-        else
-            puts "target directory (" + $hardtarget + ") must exist. Run with --init to create it."
-            exit 1
-        end
+    if ( !File.stat(target_base).owned? )
+        STDERR.puts "backup directory #{target_base} is not yours."
+        exit 1
     end
-    if (!FileTest.directory?($hardtarget))
-        puts "target directory (" + $hardtarget + ") is not a directory"
-        exit
+    if (!FileTest.writable?(target_base))
+        STDERR.puts "backup directory #{target_base} is not writable."
+        exit 1
     end
-    
+end
+
+backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
+$backup_dir = File.join(target_base, backup_suffix)
+$logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('@@'))) + "-log" + backup_suffix
+$hardtarget = File.expand_path(File.join($target, reldir, ".."))
+
+if (!FileTest.exists?($hardtarget))
     if ($init)
-        puts "will not backup in init mode"
-        next
+        sc = SystemCommand.new
+        sc.safeExec('mkdir', ['-p', $hardtarget])
+    else
+        STDERR.puts "target directory (" + $hardtarget + ") must exist. Run with --init to create it."
+        exit 1
     end
+end
+if (!FileTest.directory?($hardtarget))
+    STDERR.puts "target directory (" + $hardtarget + ") is not a directory"
+    exit
+end
 
-    base = [
+if ($init)
+    STDERR.puts "will not backup in init mode"
+    exit 0
+end
+
+base = [
+]
+if ($dobackup)
+    base  = base + [
+            "--backup",
+            "--backup-dir=" + $backup_dir,
     ]
-    if ($dobackup)
-        base  = base + [
-                "--backup",
-                "--backup-dir=" + $backup_dir,
-        ]
-    end
+end
 
-    base = base + excludes.collect {
-        |a|
-        '--exclude=' + a
-    }
-
-    dirs = [
-            dir,
-            $hardtarget
-        ]
-    
-    execute( "rsync", base + options.keys + dirs )        
+base = base + excludes.collect {
+    |a|
+    '--exclude=' + a
 }
+
+execute( "rsync", dir, $hardtarget, base + options.keys )
