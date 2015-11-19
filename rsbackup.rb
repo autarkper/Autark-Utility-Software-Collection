@@ -204,22 +204,22 @@ ARGV.each {
 }
 ARGV.each {
     | dir |
+    dir = File.expand_path(dir)
     reldir = dir[1, dir.length]
-    target_base = File.expand_path(File.join($target, '.versions', reldir))
+    target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('@@')))
 
-    version_dir = File.split(target_base)[0]
-    if (!FileTest.exists?(version_dir))
+    if (!FileTest.exists?(target_base))
         if ($init)
             sc = SystemCommand.new
-            sc.safeExec('mkdir', ['-p', version_dir])
+            sc.safeExec('mkdir', ['-p', target_base])
         else
-            puts "directory #{version_dir} does not exist, run with --init if you wish to create it"
+            puts "backup directory #{target_base} does not exist, run with --init if you wish to create it."
             exit
         end
     end
     backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
-    $backup_dir = target_base + backup_suffix
-    $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('_'))) + "-log" + backup_suffix
+    $backup_dir = File.join(target_base, backup_suffix)
+    $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('@@'))) + "-log" + backup_suffix
     $hardtarget = File.expand_path(File.join($target, reldir, ".."))
     
     if (!FileTest.exists?($hardtarget))
