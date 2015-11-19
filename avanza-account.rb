@@ -1,6 +1,7 @@
 #!/usr/bin/ruby -wE:utf-8
 
 require 'getoptlong'
+require 'bigdecimal'
 
 SALE = "Sälj"
 BUY = "Köp"
@@ -35,7 +36,7 @@ def round(num)
 end
 
 def rounda(num, precision)
-    return (num * precision.to_f).round/precision.to_f
+    return (num * precision).round/precision.to_f
 end
 
 $rows = []
@@ -48,14 +49,14 @@ $fh.each_line {
 }
 
 $account = ""
-$deposits = 0
-$withdrawn = 0
+$deposits = BigDecimal.new(0)
+$withdrawn = BigDecimal.new(0)
 $bought = 0
-$sold = 0
-$dividends = 0
-$prelskatt = 0
-$other = 0
-$pnl0 = 0
+$sold = BigDecimal.new(0)
+$dividends = BigDecimal.new(0)
+$prelskatt = BigDecimal.new(0)
+$other = BigDecimal.new(0)
+$pnl0 = BigDecimal.new(0)
 
 $Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
 $papers = {}
@@ -68,20 +69,20 @@ $rows.reverse.each {
     next if (cols[0] == "Datum")
     #p cols
 
-    value_raw = cols[6].sub(",", ".").to_f
+    value_raw = BigDecimal.new(cols[6].sub(",", "."))
     value = value_raw.abs
     type = cols[2]
     papern = cols[3]
-    amount = cols[4].sub(",", ".").to_f.abs
-    price = cols[5].sub(",", ".").to_f
+    amount = BigDecimal.new(cols[4].sub(",", ".")).abs
+    price = BigDecimal.new(cols[5].sub(",", "."))
 
     $account = cols[1]
     if (type =~ /Ins.ttning/)
-        $deposits += value.to_f
+        $deposits += value
         $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value)
     end
     if (type =~ /Uttag/)
-        $withdrawn -= value.to_f
+        $withdrawn -= value
         $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value)
     end
     buy = false
@@ -142,9 +143,9 @@ $rows.reverse.each {
     end
 }
 puts "Konto: #{$account}"
-puts "Insättningar: #{$deposits}#{$___}Uttag: #{$withdrawn}#{$___}netto: #{netdep = $deposits - $withdrawn}"
+puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits - $withdrawn).to_f}"
 puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}"
-puts "Utdelningar: #{$dividends}#{$___}Prelskatt: #{$prelskatt}"
+puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
 puts "Övrigt: #{$other}"
 puts
 
@@ -161,9 +162,9 @@ $Transactions.each {
 puts
 
 netbought = $bought - $sold
-$pnl = 0
-$value = 0
-$vikt = 0
+$pnl = BigDecimal.new(0)
+$value = BigDecimal.new(0)
+$vikt = BigDecimal.new(0)
 $papers.sort{|a, b|
     boq = (b[1].amount == 0 ? 0 : 1)
     aaq = (a[1].amount == 0 ? 0 : 1)
