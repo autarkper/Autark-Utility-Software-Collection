@@ -12,6 +12,7 @@ options:
         --batch: don't prompt for OK
         --detailed: invoke rsync with --itemize-changes
         --no-backup: don't save backup copies of old versions and deleted files
+        --init: initialize target and backup directories (cannot be combined with a backup run)
         --help: show this help text
 ENDS
 
@@ -43,7 +44,8 @@ opts = GetoptLong.new(
     [ "--no-backup", GetoptLong::NO_ARGUMENT ],
     [ "--checksum", GetoptLong::NO_ARGUMENT ],
     [ "--target", GetoptLong::REQUIRED_ARGUMENT],
-    [ "--detailed", GetoptLong::NO_ARGUMENT]
+    [ "--detailed", GetoptLong::NO_ARGUMENT],
+    [ "--init", GetoptLong::NO_ARGUMENT],
 )
 
 $bBatchMode = false
@@ -51,6 +53,7 @@ $bDryRun = true
 $logfile = ""
 $target = nil
 $dobackup = true
+$init = false
 
 opts.each {
     | opt, arg |
@@ -70,6 +73,8 @@ opts.each {
         options["--checksum"] = 1
     elsif (opt == "--detailed")
         options["--itemize-changes"] = 1
+    elsif (opt == "--init")
+        $init = true
     end
 }
 
@@ -80,27 +85,20 @@ if ($target == nil)
     exit
 end
 
-if (!FileTest.exists?($target))
-    puts "target directory (" + $target + ") does not exist"
-    exit
-end
-if (!FileTest.directory?($target))
-    puts "target directory (" + $target + ") is not a directory"
-    exit
-end
-
 if (ARGV.length < 1)
     puts usage
     exit
 end
 
-if ($bDryRun)
-    puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
-elsif (!$dobackup)
-    puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
-    input = STDIN.gets.chomp
-    if (input != "No backup")
-        exit 0
+if (!$init)
+    if ($bDryRun)
+        puts %Q(\nDRY RUN! To perform a real backup, run with --wet-run.)
+    elsif (!$dobackup)
+        puts %Q(\nPlease confirm no backup of old versions and deleted files by typing "No backup")
+        input = STDIN.gets.chomp
+        if (input != "No backup")
+            exit 0
+        end
     end
 end
 
@@ -187,20 +185,20 @@ ARGV.each {
     | dir |
     if dirs.has_key?(File.expand_path(dir))
         puts "repeated directory: " + dir
-        exit 
+        exit 1
     end
     if ( dir.dup.chomp!("/") != nil )
         puts dir + ": give directory name only, without trailing '/'"
-        exit
+        exit 1
     end
     
     if ( dir[0,1] != "/" )
         puts dir + ": path must be absolute, not relative"
-        exit
+        exit 1
     end
     if ( ! File.stat(dir).directory? )
         puts dir + ": path is not a directory"
-        exit
+        exit 1
     end
     dirs[File.expand_path(dir)] = 1
 }
@@ -209,16 +207,40 @@ ARGV.each {
     reldir = dir[1, dir.length]
     target_base = File.expand_path(File.join($target, '.versions', reldir))
 
+    version_dir = File.split(target_base)[0]
+    if (!FileTest.exists?(version_dir))
+        if ($init)
+            sc = SystemCommand.new
+            sc.safeExec('mkdir', ['-p', version_dir])
+        else
+            puts "directory #{version_dir} does not exist, run with --init if you wish to create it"
+            exit
+        end
+    end
     backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
     $backup_dir = target_base + backup_suffix
     $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('_'))) + "-log" + backup_suffix
     $hardtarget = File.expand_path(File.join($target, reldir, ".."))
     
     if (!FileTest.exists?($hardtarget))
-        puts "target directory (" + $hardtarget + ") must exist"
+        if ($init)
+            sc = SystemCommand.new
+            sc.safeExec('mkdir', ['-p', $hardtarget])
+        else
+            puts "target directory (" + $hardtarget + ") must exist. Run with --init to create it."
+            exit 1
+        end
+    end
+    if (!FileTest.directory?($hardtarget))
+        puts "target directory (" + $hardtarget + ") is not a directory"
         exit
     end
     
+    if ($init)
+        puts "will not backup in init mode"
+        next
+    end
+
     base = [
     ]
     if ($dobackup)
@@ -240,4 +262,3 @@ ARGV.each {
     
     execute( "rsync", base + options.keys + dirs )        
 }
-
