@@ -190,16 +190,6 @@ def execute(command, source, target, argsin)
 end
 
 dir = File.expand_path(ARGV[0])
-stat = File.stat(dir)
-if ( !stat.directory? )
-    STDERR.puts dir + ": path is not a directory"
-    exit 1
-end
-if ( !stat.owned? )
-    STDERR.puts dir + ": you do not own this path"
-    exit 1
-end
-
 reldir = dir[1, dir.length]
 target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('|')))
 
@@ -232,6 +222,7 @@ if (!FileTest.exists?($hardtarget))
     if ($init)
         sc = SystemCommand.new
         sc.safeExec('mkdir', ['-p', $hardtarget])
+        sc.safeExec('chown', ['--reference', dir, $hardtarget])
     else
         STDERR.puts "target directory (" + $hardtarget + ") must exist. Run with --init to create it."
         exit 1
@@ -245,6 +236,16 @@ end
 if ($init)
     STDERR.puts "will not backup in init mode"
     exit 0
+end
+
+stat = File.stat(dir)
+if ( !stat.directory? )
+    STDERR.puts dir + ": path is not a directory"
+    exit 1
+end
+if ( !stat.owned? )
+    STDERR.puts dir + ": you do not own this path"
+#    exit 1
 end
 
 base = [
