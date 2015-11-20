@@ -201,7 +201,7 @@ if ( !stat.owned? )
 end
 
 reldir = dir[1, dir.length]
-target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('@@')))
+target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('|')))
 
 if ($dobackup)
     if (!FileTest.exists?(target_base))
@@ -225,7 +225,7 @@ end
 
 backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
 $backup_dir = File.join(target_base, backup_suffix)
-$logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('@@'))) + "-log" + backup_suffix
+$logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('|'))) + "-log" + backup_suffix
 $hardtarget = File.expand_path(File.join($target, reldir, ".."))
 
 if (!FileTest.exists?($hardtarget))
