@@ -171,7 +171,7 @@ $papers.sort{|a, b|
     if (aaq != boq)
         (aaq <=> boq) * -1
     else
-        a[0] <=> b[0]
+        a[0].upcase <=> b[0].upcase
     end
     }.each {
     |name, paper|
