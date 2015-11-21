@@ -1,6 +1,7 @@
 #!/usr/bin/ruby -w
 
 require_relative "SystemCommand"
+require 'etc'
 
 usage = <<ENDS
 usage: #{$0}: dir [,dir] --target target-dir
@@ -80,6 +81,11 @@ opts.each {
 
 $bBatchMode = $bDryRun || $bBatchMode
 
+if (Process.uid == 0)
+    STDERR.puts "you are running as root! OK?"
+    STDIN.gets()
+end
+
 if ($target == nil)
     STDERR.puts usage
     exit
@@ -113,8 +119,8 @@ def execute(command, source, target, argsin)
     if (!$bDryRun)
         begin
             logfileh = File.open( $logfile, "w" )
-        rescue Exception => e
-            STDERR.puts('ERROR: could not create log file, "' + e + '"')
+        rescue Exception
+            STDERR.puts("ERROR: could not create log file: '#{$!}'")
             exit(1)
         end
     end
@@ -190,14 +196,24 @@ def execute(command, source, target, argsin)
 end
 
 dir = File.expand_path(ARGV[0])
+stat = File.stat(dir)
+if ( !stat.directory? )
+    STDERR.puts dir + ": path is not a directory"
+    exit 1
+end
+if ( !stat.owned? )
+    STDERR.puts dir + ": you do not own this path"
+    exit 1
+end
+
 reldir = dir[1, dir.length]
 target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('|')))
-
 if ($dobackup)
     if (!FileTest.exists?(target_base))
         if ($init)
             sc = SystemCommand.new
-            sc.safeExec('mkdir', ['-p', target_base])
+            user = Etc.getpwuid(Process.uid).name
+            sc.safeExec("sudo", ['-k', 'install', '-d', '-o', user, target_base])
         else
             STDERR.puts "backup directory #{target_base} does not exist, run with --init if you wish to create it."
             exit
@@ -213,6 +229,16 @@ if ($dobackup)
     end
 end
 
+if (!FileTest.writable?($target))
+    if ($init)
+        sc = SystemCommand.new
+        sc.safeExec("sudo", ['-k', 'chmod', '--reference', '/tmp', $target])
+    else
+        STDERR.puts "target directory #{$target} is not writable."
+        exit 1
+    end
+end
+
 backup_suffix = "#" + Time.now.strftime("%Y-%m-%d#%X")
 $backup_dir = File.join(target_base, backup_suffix)
 $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('|'))) + "-log" + backup_suffix
@@ -221,8 +247,7 @@ $hardtarget = File.expand_path(File.join($target, reldir, ".."))
 if (!FileTest.exists?($hardtarget))
     if ($init)
         sc = SystemCommand.new
-        sc.safeExec('mkdir', ['-p', $hardtarget])
-        sc.safeExec('chown', ['--reference', dir, $hardtarget])
+        sc.safeExec("sudo", ['-k', 'install', '-d', '-o', ENV["USER"], $hardtarget])
     else
         STDERR.puts "target directory (" + $hardtarget + ") must exist. Run with --init to create it."
         exit 1
@@ -234,18 +259,8 @@ if (!FileTest.directory?($hardtarget))
 end
 
 if ($init)
-    STDERR.puts "will not backup in init mode"
+    STDERR.puts "init done"
     exit 0
-end
-
-stat = File.stat(dir)
-if ( !stat.directory? )
-    STDERR.puts dir + ": path is not a directory"
-    exit 1
-end
-if ( !stat.owned? )
-    STDERR.puts dir + ": you do not own this path"
-#    exit 1
 end
 
 base = [
