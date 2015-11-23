@@ -151,6 +151,10 @@ def execute(command, source, target, argsin)
             STDIN.gets
         rescue SignalException => e
             STDERR.puts "\nAborted."
+            if (logfileh != nil)
+                logfileh.close()
+                File.delete($logfile)
+            end
             exit(1)
         end
     end
@@ -192,7 +196,9 @@ def execute(command, source, target, argsin)
     if ($errors != 0) then output.call("There were warnings or errors: #{$errors}") end
     if (ret != 0) then output.call("\nrsync returned non-zero: " + ret.to_s) end
 
-    logfileh.close()
+    if (logfileh != nil)
+        logfileh.close()
+    end
 end
 
 dir = File.expand_path(ARGV[0])
