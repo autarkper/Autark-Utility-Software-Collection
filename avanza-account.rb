@@ -8,6 +8,7 @@ BUY = "Köp"
 DIVIDEND = "Utd"
 DEPOSIT = "Ins"
 WITHDRAWAL = "Utt"
+OTHER = "Övr"
 
 options = [
     ]
@@ -51,7 +52,7 @@ $fh.each_line {
 $account = ""
 $deposits = BigDecimal.new(0)
 $withdrawn = BigDecimal.new(0)
-$bought = 0
+$bought = BigDecimal.new(0)
 $sold = BigDecimal.new(0)
 $dividends = BigDecimal.new(0)
 $prelskatt = BigDecimal.new(0)
@@ -121,6 +122,7 @@ $rows.reverse.each {
         else
             $other += value_raw
         end
+        $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw)
     end
 
     if (buy)
@@ -144,9 +146,9 @@ $rows.reverse.each {
 }
 puts "Konto: #{$account}"
 puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits - $withdrawn).to_f}"
-puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}"
+puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}#{$___}netto: #{rounda($bought - $sold, 100)}"
 puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
-puts "Övrigt: #{$other}"
+puts "Övrigt: #{$other.to_f}"
 puts
 
 $Transactions.each {
