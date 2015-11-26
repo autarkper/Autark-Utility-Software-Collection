@@ -118,7 +118,7 @@ $rows.reverse.each {
 
     if (type =~ /.vrigt/)
         if (papern == "Avkastningsskatt")
-            $prelskatt += value
+            $prelskatt += value_raw
         else
             $other += value_raw
         end
@@ -198,8 +198,12 @@ if (round(v2 = netbought + $pnl) != round($value))
     raise [v2, $value].inspect
 end
 
+cash = netdep - netbought + $dividends + $prelskatt + $other
+cashvalue = $value + cash
 $pnlpercent = $deposits != 0 ? $pnl / $deposits * 100 : 0
+$invpercent = netdep != 0 ? $value / netdep * 100 : 0
+$cashpercent = $value != 0 ? cash / $value * 100 : 0
 puts
-puts "Totalt investerat: #{rounda($value, 100)}, Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
-puts "Kassa: #{rounda(cash = netdep - netbought + $dividends - $prelskatt + $other, 100)}"
-puts "Kassa + investerat: #{rounda($value + cash, 100)}"
+puts "Totalt investerat: #{rounda($value, 100)} (#{rounda($invpercent, 10)}% av insättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
+puts "Kassa: #{rounda(cash, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
+puts "Kassa + investerat: #{rounda(cashvalue, 100)}"
