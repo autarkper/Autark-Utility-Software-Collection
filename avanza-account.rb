@@ -58,6 +58,7 @@ $dividends = BigDecimal.new(0)
 $prelskatt = BigDecimal.new(0)
 $other = BigDecimal.new(0)
 $pnl0 = BigDecimal.new(0)
+$kassa = BigDecimal.new(0)
 
 $Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
 $papers = {}
@@ -80,10 +81,12 @@ $rows.reverse.each {
     $account = cols[1]
     if (type =~ /Ins.ttning/)
         $deposits += value
+        $kassa += value
         $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value)
     end
     if (type =~ /Uttag/)
         $withdrawn -= value
+        $kassa -= value
         $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value)
     end
     buy = false
@@ -103,6 +106,7 @@ $rows.reverse.each {
 
     if (type == "Prelskatt utdelningar")
         $prelskatt += value
+        $kassa -= value
         next
     end
     if (buy || sell || amount != 0)
@@ -113,6 +117,7 @@ $rows.reverse.each {
     if (type == "Utdelning")
         paper.dividends += value
         $dividends += value
+        $kassa += value
         $Transactions << $Transaction.new(DIVIDEND, papern, cols[0], amount, price, 0, 0, value)
     end
 
@@ -122,11 +127,13 @@ $rows.reverse.each {
         else
             $other += value_raw
         end
+        $kassa -= value
         $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw)
     end
 
     if (buy)
         $bought += value
+        $kassa -= value
         paper.amount = paper.amount + amount
         paper.value += value
         paper.highest = [paper.highest, price].max
@@ -134,6 +141,7 @@ $rows.reverse.each {
         $Transactions << $Transaction.new(BUY, papern, cols[0], amount, price, acqp, 0, value)
     elsif (sell)
         $sold += value
+        $kassa += value
         acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
         paper.amount -= amount
@@ -199,11 +207,14 @@ if (round(v2 = netbought + $pnl) != round($value))
 end
 
 cash = netdep - netbought + $dividends + $prelskatt + $other
-cashvalue = $value + cash
+if (cash != $kassa)
+    raise [cash, $kassa].inspect
+end
+
 $pnlpercent = $deposits != 0 ? $pnl / $deposits * 100 : 0
 $invpercent = netdep != 0 ? $value / netdep * 100 : 0
-$cashpercent = $value != 0 ? cash / $value * 100 : 0
+$cashpercent = $value != 0 ? $kassa / $value * 100 : 0
 puts
-puts "Totalt investerat: #{rounda($value, 100)} (#{rounda($invpercent, 10)}% av insättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
-puts "Kassa: #{rounda(cash, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
-puts "Kassa + investerat: #{rounda(cashvalue, 100)}"
+puts "Totalt investerat: #{rounda($value, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
+puts "Kassa: #{rounda($kassa, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
+puts "Kassa + investerat: #{rounda($value + $kassa, 100)}"
