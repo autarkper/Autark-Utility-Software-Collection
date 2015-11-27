@@ -91,9 +91,7 @@ $rows.reverse.each {
     end
     buy = false
     sell = false
-    correction = false
     if (type =~ /, r.ttelse/)
-        correction = true
         value = -value
         amount = -amount
     end
@@ -175,6 +173,9 @@ netbought = $bought - $sold
 $pnl = BigDecimal.new(0)
 $value = BigDecimal.new(0)
 $vikt = BigDecimal.new(0)
+holdings = []
+soldoff = []
+
 $papers.sort{|a, b|
     boq = (b[1].amount == 0 ? 0 : 1)
     aaq = (a[1].amount == 0 ? 0 : 1)
@@ -187,15 +188,21 @@ $papers.sort{|a, b|
     |name, paper|
     $pnl = $pnl + paper.pnl
     pnl = (paper.pnl == 0) ? "" : "#{$___}PnL: #{round(paper.pnl)}"
-    divpercent = paper.value == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
+    divpercent = paper.amount == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
     dividends = (paper.dividends == 0) ? "" : "#{$___}Utdelningar: #{round(paper.dividends)}" + divpercent
     if (paper.amount != 0)
         vikt = paper.value/(netbought + $pnl0) * 100
         $vikt += vikt
-        puts "Papper: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Värde: #{round(paper.value)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
+        holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Värde: #{round(paper.value)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.amount == 0 ? 0 : paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         $value = $value + paper.value
+    else
+        soldoff << "Avslutat innehav: \"#{name}\"#{pnl}#{dividends}"
     end
 }
+soldoff.each {|entry| puts entry}
+puts
+holdings.each {|entry| puts entry}
+
 if (round($vikt) != round(100))
     raise [$vikt, 100.0].inspect
 end
@@ -217,4 +224,3 @@ $cashpercent = $value != 0 ? $kassa / $value * 100 : 0
 puts
 puts "Totalt investerat: #{rounda($value, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
 puts "Kassa: #{rounda($kassa, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
-puts "Kassa + investerat: #{rounda($value + $kassa, 100)}"
