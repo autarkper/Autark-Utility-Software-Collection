@@ -193,7 +193,7 @@ $papers.sort{|a, b|
     if (paper.amount != 0)
         vikt = paper.value/(netbought + $pnl0) * 100
         $vikt += vikt
-        holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Värde: #{round(paper.value)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.amount == 0 ? 0 : paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
+        holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Investerat: #{rounda(paper.value, 100)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.amount == 0 ? 0 : paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         $value = $value + paper.value
     else
         soldoff << "Avslutat innehav: \"#{name}\"#{pnl}#{dividends}"
