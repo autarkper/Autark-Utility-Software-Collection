@@ -51,13 +51,15 @@ def calculateMaxThreads()
 end
 
 
+pattern = '*.flac'
+
 $show_help = false
 $out_dir = nil
 $dry_run = false
 $overwrite = false
 $max_threads = calculateMaxThreads()
 $find_dir = []
-$find_pattern = '*.flac'
+$find_pattern = nil
 $find_maxdepth = nil
 $find_mindepth = nil
 $find_prune = nil
@@ -109,6 +111,7 @@ opts.each {
         $lame = true
     elsif (opt == "--toflac")
         $toflac = true
+        pattern = '*.wav'
     elsif (opt == "--delete-after")
         $delete = true
     elsif (opt == "--utility")
@@ -121,6 +124,10 @@ opts.each {
         $nomangle = true
     end
 }
+
+if ($find_pattern == nil)
+    $find_pattern = pattern
+end
 
 if (!$out_dir.nil? && $inplace)
     puts "#{File.basename($0)}: --target-dir and --in-place are mutually exclusive"
