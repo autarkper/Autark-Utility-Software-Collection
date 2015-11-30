@@ -63,7 +63,7 @@ $kassa = BigDecimal.new(0)
 $Paper = Struct.new("Paper", :amount, :value, :dividends, :pnl, :highest)
 $papers = {}
 
-$Transaction = Struct.new("Transaction", :type, :paper, :date, :amount, :price, :acqp, :pnl, :value)
+$Transaction = Struct.new("Transaction", :type, :paper, :date, :amount, :price, :acqp, :pnl, :value, :diff)
 $Transactions = []
 
 $rows.reverse.each {
@@ -75,19 +75,21 @@ $rows.reverse.each {
     value = value_raw.abs
     type = cols[2]
     papern = cols[3]
-    amount = BigDecimal.new(cols[4].sub(",", ".")).abs
+    amount_raw = BigDecimal.new(cols[4].sub(",", "."))
+    amount = amount_raw.abs
     price = BigDecimal.new(cols[5].sub(",", "."))
+    diff = (price * amount_raw) + value_raw
 
     $account = cols[1]
     if (type =~ /Ins.ttning/)
         $deposits += value
         $kassa += value
-        $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value)
+        $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value, diff)
     end
     if (type =~ /Uttag/)
         $withdrawn -= value
         $kassa -= value
-        $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value)
+        $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value, diff)
     end
     buy = false
     sell = false
@@ -116,7 +118,7 @@ $rows.reverse.each {
         paper.dividends += value
         $dividends += value
         $kassa += value
-        $Transactions << $Transaction.new(DIVIDEND, papern, cols[0], amount, price, 0, 0, value)
+        $Transactions << $Transaction.new(DIVIDEND, papern, cols[0], amount, price, 0, 0, value, 0)
     end
 
     if (type =~ /.vrigt/)
@@ -126,7 +128,7 @@ $rows.reverse.each {
             $other += value_raw
         end
         $kassa -= value
-        $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw)
+        $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw, 0)
     end
 
     if (buy)
@@ -136,7 +138,7 @@ $rows.reverse.each {
         paper.value += value
         paper.highest = [paper.highest, price].max
         acqp = paper.value/paper.amount
-        $Transactions << $Transaction.new(BUY, papern, cols[0], amount, price, acqp, 0, value)
+        $Transactions << $Transaction.new(BUY, papern, cols[0], amount, price, acqp, 0, value, diff)
     elsif (sell)
         $sold += value
         $kassa += value
@@ -147,7 +149,7 @@ $rows.reverse.each {
         pnl = value - acqv
         $pnl0 += pnl
         paper.pnl += pnl
-        $Transactions << $Transaction.new(SALE, papern, cols[0], amount, price, acqp, pnl, value)
+        $Transactions << $Transaction.new(SALE, papern, cols[0], amount, price, acqp, pnl, value, diff)
     end
 }
 puts "Konto: #{$account}"
@@ -157,16 +159,20 @@ puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
 puts "Övrigt: #{$other.to_f}"
 puts
 
+$diff = BigDecimal.new(0)
 $Transactions.each {
     |trans|
     if (trans.paper != nil)
         pnl = trans.pnl == 0 ? "" : "#{$___}PnL: #{round(trans.pnl)}"
         acqp = (trans.acqp == 0) ? "" : "#{$___}Ansk.pris: #{round(trans.acqp)}"
         puts "[#{trans.type}] Datum: #{trans.date}#{$___}Papper: \"#{trans.paper}\"#{$___}Antal: #{rounda(trans.amount, 10000)}#{$___}Pris: #{round(trans.price)}#{$___}Belopp: #{round(trans.value)}#{acqp}#{pnl}"
+        $diff += trans.diff
+#        p $diff.to_f
     else
         puts "[#{trans.type}] Datum: #{trans.date}#{$___}Belopp: #{round(trans.value)}#{acqp}#{pnl}"
     end
 }
+# puts "Differens: #{$diff.to_f}"
 puts
 
 netbought = $bought - $sold
