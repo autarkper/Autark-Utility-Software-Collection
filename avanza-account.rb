@@ -153,10 +153,6 @@ $rows.reverse.each {
     end
 }
 puts "Konto: #{$account}"
-puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits - $withdrawn).to_f}"
-puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}#{$___}netto: #{rounda($bought - $sold, 100)}"
-puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
-puts "Övrigt: #{$other.to_f}"
 puts
 
 $diff = BigDecimal.new(0)
@@ -208,7 +204,12 @@ $papers.sort{|a, b|
 soldoff.each {|entry| puts entry}
 puts
 holdings.each {|entry| puts entry}
+puts
 
+puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits - $withdrawn).to_f}"
+puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}#{$___}netto: #{rounda($bought - $sold, 100)}"
+puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
+puts "Övrigt: #{$other.to_f}"
 if (round($vikt) != round(100))
     raise [$vikt, 100.0].inspect
 end
