@@ -80,6 +80,7 @@ $rows.reverse.each {
     price = BigDecimal.new(cols[5].sub(",", "."))
     diff = (price * amount_raw) + value_raw
 
+    liquidate = false
     $account = cols[1]
     if (type =~ /Ins.ttning/)
         $deposits += value
@@ -102,6 +103,17 @@ $rows.reverse.each {
         buy = true
     elsif (type =~ /S.lj/)
         sell = true
+    end
+
+    if (type =~ /Byte till/)
+        liquidate = true
+        sell = true
+        paper = $papers[papern]
+        amount = paper.amount
+        value = paper.value
+    elsif (type =~ /Byte från/)
+        liquidate = true
+        buy = true
     end
 
     if (type == "Prelskatt utdelningar")
@@ -132,22 +144,32 @@ $rows.reverse.each {
     end
 
     if (buy)
-        $bought += value
-        $kassa -= value
+        if (!liquidate)
+            $bought += value
+            $kassa -= value
+        end
         paper.amount = paper.amount + amount
         paper.value += value
         paper.highest = [paper.highest, price].max
         acqp = paper.value/paper.amount
         $Transactions << $Transaction.new(BUY, papern, cols[0], amount, price, acqp, 0, value, diff)
     elsif (sell)
-        $sold += value
-        $kassa += value
+        if (!liquidate)
+            $sold += value
+            $kassa += value
+        end
         acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
         paper.amount -= amount
-        paper.value -= acqv
-        pnl = value - acqv
-        $pnl0 += pnl
+        pnl = 0
+        if (!liquidate)
+            paper.value -= acqv
+            pnl = value - acqv
+            $pnl0 += pnl
+        else
+            paper.value = 0
+            paper.amount = 0
+        end
         paper.pnl += pnl
         $Transactions << $Transaction.new(SALE, papern, cols[0], amount, price, acqp, pnl, value, diff)
     end
@@ -172,8 +194,9 @@ $Transactions.each {
 puts
 
 netbought = $bought - $sold
+$value = netbought + $pnl0
 $pnl = BigDecimal.new(0)
-$value = BigDecimal.new(0)
+$sumvalue = BigDecimal.new(0)
 $vikt = BigDecimal.new(0)
 holdings = []
 soldoff = []
@@ -193,10 +216,10 @@ $papers.sort{|a, b|
     divpercent = paper.amount == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
     dividends = (paper.dividends == 0) ? "" : "#{$___}Utdelningar: #{round(paper.dividends)}" + divpercent
     if (paper.amount != 0)
-        vikt = paper.value/(netbought + $pnl0) * 100
+        vikt = paper.value/$value * 100
         $vikt += vikt
         holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Investerat: #{rounda(paper.value, 100)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{rounda((paper.amount == 0 ? 0 : paper.value/paper.amount), 100)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
-        $value = $value + paper.value
+        $sumvalue = $sumvalue + paper.value
     else
         soldoff << "Avslutat innehav: \"#{name}\"#{pnl}#{dividends}"
     end
@@ -211,23 +234,23 @@ puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}#{$___}ne
 puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
 puts "Övrigt: #{$other.to_f}"
 if (round($vikt) != round(100))
-    raise [$vikt, 100.0].inspect
+    p ["vikt", $vikt.to_f, 100.0].inspect
 end
 if (round($pnl) != round($pnl0))
-    raise [$pnl0, $value].inspect
+    pnl ["pnl", $pnl.to_f, $pnl0.to_f].inspect
 end
-if (round(v2 = netbought + $pnl) != round($value))
-    raise [v2, $value].inspect
+if (round($value) != round($sumvalue))
+    p ["value", $value.to_f, $sumvalue.to_f].inspect
 end
 
 cash = netdep - netbought + $dividends + $prelskatt + $other
 if (cash != $kassa)
-    raise [cash, $kassa].inspect
+    p ["kassa", cash.to_f, $kassa.to_f].inspect
 end
 
 $pnlpercent = $deposits != 0 ? $pnl / $deposits * 100 : 0
-$invpercent = netdep != 0 ? $value / netdep * 100 : 0
-$cashpercent = $value != 0 ? $kassa / $value * 100 : 0
+$invpercent = netdep != 0 ? $sumvalue / netdep * 100 : 0
+$cashpercent = $sumvalue != 0 ? $kassa / $sumvalue * 100 : 0
 puts
-puts "Totalt investerat: #{rounda($value, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
+puts "Totalt investerat: #{rounda($sumvalue, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
 puts "Kassa: #{rounda($kassa, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
