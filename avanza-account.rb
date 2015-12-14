@@ -160,7 +160,7 @@ $Transactions.each {
     |trans|
     if (trans.paper != nil)
         pnl = trans.pnl == 0 ? "" : "#{$___}PnL: #{round(trans.pnl)}"
-        acqp = (trans.acqp == 0) ? "" : "#{$___}Ansk.pris: #{round(trans.acqp)}"
+        acqp = (trans.acqp == 0) ? "" : "#{$___}Ansk.pris: #{rounda(trans.acqp, 100)}"
         puts "[#{trans.type}] Datum: #{trans.date}#{$___}Papper: \"#{trans.paper}\"#{$___}Antal: #{rounda(trans.amount, 10000)}#{$___}Pris: #{round(trans.price)}#{$___}Belopp: #{round(trans.value)}#{acqp}#{pnl}"
         $diff += trans.diff
 #        p $diff.to_f
@@ -195,7 +195,7 @@ $papers.sort{|a, b|
     if (paper.amount != 0)
         vikt = paper.value/(netbought + $pnl0) * 100
         $vikt += vikt
-        holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Investerat: #{rounda(paper.value, 100)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{round(paper.amount == 0 ? 0 : paper.value/paper.amount)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
+        holdings << "Innehav: \"#{name}\"#{$___}Antal: #{rounda(paper.amount, 10000)}#{$___}Investerat: #{rounda(paper.value, 100)}#{$___}Vikt: #{rounda(vikt, 100)}%#{$___}Ansk.pris: #{rounda((paper.amount == 0 ? 0 : paper.value/paper.amount), 100)}#{$___}Högsta: #{rounda(paper.highest, 100)}#{pnl}#{dividends}"
         $value = $value + paper.value
     else
         soldoff << "Avslutat innehav: \"#{name}\"#{pnl}#{dividends}"
