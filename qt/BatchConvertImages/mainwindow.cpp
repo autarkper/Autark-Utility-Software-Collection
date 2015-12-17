@@ -19,14 +19,14 @@ namespace
 {
     unsigned int s_lastTime_t = 0;
     QString s_pxMarker("px");
-    typedef QString FrameColor[2]; // caption, height, width, (optional) px, (optional) ppi
+    using FrameColor = QString[2]; // caption, height, width, (optional) px, (optional) ppi
     FrameColor const s_frame_colors[] = {
         {"Black", "#000000"},
         {"White", "#ffffff"},
         {"Gray", "#888888"},
     };
 
-    typedef QString DimPreset[5]; // caption, height, width, (optional) px, (optional) ppi
+    using DimPreset = QString[5]; // caption, height, width, (optional) px, (optional) ppi
 
     DimPreset const s_presets[] = {
         {"Screen 1024x1024 px", "1024", "1024", s_pxMarker, /* PPI: */ "90"},
@@ -62,19 +62,19 @@ namespace
 
     QString s_last_inputfiles_str;
 
-    typedef boost::tuples::tuple<QString, QString> SplitComponents;
+    using SplitComponents = boost::tuples::tuple<QString, QString>;
 
     SplitComponents splitPath(QString const & instring)
     {
         using namespace boost;
 
-        const QString instriq = QDir::fromNativeSeparators(instring);
+        const auto instriq = QDir::fromNativeSeparators(instring);
         if (QDir(instriq).exists())
         {
             return make_tuple(instriq, "");
         }
 
-        const std::string instri = instriq.toStdString();
+        const auto instri = instriq.toStdString();
 
         static const regex rFull("(.*/)([^/]*)");
         static const regex rLocal("(.+)");
@@ -154,7 +154,7 @@ void MainWindow::on_bnInputBrowse_clicked()
     QString input_path;
     if (!m_usingBrowseInput)
     {
-        SplitComponents const splitter = splitPath(ui->lnInputDir->text());
+        auto const splitter = splitPath(ui->lnInputDir->text());
         input_path = splitter.get<0>();
     }
 
@@ -164,7 +164,7 @@ void MainWindow::on_bnInputBrowse_clicked()
 
     if (fileNames.count() > 0)
     {
-        int count = fileNames.count();
+        auto count = fileNames.count();
 
         // this will trigger on_lnInputDir_textChanged, so it has to be done early
         ui->lnInputDir->setText(count == 1 ? *fileNames.begin() : count > 1 ? "(List)" : "");
@@ -181,7 +181,7 @@ void MainWindow::on_bnInputBrowse_clicked()
 
 void MainWindow::on_bnOutputBrowse_clicked()
 {
-    QString fileName = QFileDialog::getExistingDirectory(this, tr("Target Directory"), ui->lnOutputDir->text(), 0);
+    auto fileName = QFileDialog::getExistingDirectory(this, tr("Target Directory"), ui->lnOutputDir->text(), 0);
     if (!fileName.isEmpty())
     {
         ui->lnOutputDir->setText(fileName);
@@ -195,7 +195,7 @@ void MainWindow::on_lnInputDir_editingFinished()
 
 void MainWindow::on_lnInputDir_textChanged(QString )
 {
-    QString inputfiles_str = ui->lnInputDir->text().simplified(); // remove unnecessary whitespace
+    auto inputfiles_str = ui->lnInputDir->text().simplified(); // remove unnecessary whitespace
     if (s_last_inputfiles_str == inputfiles_str)
     {
         return;
@@ -204,7 +204,7 @@ void MainWindow::on_lnInputDir_textChanged(QString )
     s_last_inputfiles_str = inputfiles_str;
     m_fileNames.clear();
 
-    SplitComponents const splitter = splitPath(inputfiles_str);
+    auto const splitter = splitPath(inputfiles_str);
     m_find_dir = splitter.get<0>();
     m_find_pattern = splitter.get<1>();
 
@@ -260,7 +260,7 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
     }
     else
     {
-        QString suffix = ui->leSuffix->text().trimmed();
+        auto suffix = ui->leSuffix->text().trimmed();
         if (!suffix.isEmpty())
         {
             args << "--suffix";
@@ -268,21 +268,21 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
         }
     }
 
-    QString extension = ui->cbTypes->currentText();
+    auto extension = ui->cbTypes->currentText();
     if (!extension.isEmpty())
     {
         args << "--target-type";
         args << extension;
     }
 
-    QString imageType = ui->cbImageType->currentText();
+    auto imageType = ui->cbImageType->currentText();
     if (!imageType.isEmpty())
     {
         args << "--image-type";
         args << imageType;
     }
 
-    QString extraParams = ui->lnExtraParams->text().trimmed();
+    auto extraParams = ui->lnExtraParams->text().trimmed();
     if (!extraParams.isEmpty())
     {
         args << "--extra-parameters";
@@ -315,7 +315,7 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
         {
             args << "--despeckle";
         }
-        QString noise_radius = ui->leNoiseRadius->text().trimmed();
+        auto noise_radius = ui->leNoiseRadius->text().trimmed();
         if (!noise_radius.isEmpty() && ui->chkNoise->checkState() == Qt::Checked)
         {
             args << "--noise";
@@ -328,14 +328,14 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
 
 
         bool dim_arg = false;
-        QString height = ui->leHeight->text().trimmed();
+        auto height = ui->leHeight->text().trimmed();
         if (!height.isEmpty())
         {
             args << "--height";
             args << height;
             dim_arg = true;
         }
-        QString width = ui->leWidth->text().trimmed();
+        auto width = ui->leWidth->text().trimmed();
         if (!width.isEmpty())
         {
             args << "--width";
@@ -343,14 +343,14 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
             dim_arg = true;
         }
 
-        QString quality = ui->leQuality->text().trimmed();
+        auto quality = ui->leQuality->text().trimmed();
         if (!quality.isEmpty())
         {
             args << "--quality";
             args << quality;
         }
 
-        QString ppi = ui->lePPI->text().trimmed();
+        auto ppi = ui->lePPI->text().trimmed();
         if (!ppi.isEmpty())
         {
             args << "--ppi";
@@ -369,39 +369,39 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
             }
         }
 
-        QString frameDim = ui->leFrameDim->text().trimmed();
+        auto frameDim = ui->leFrameDim->text().trimmed();
         if (!frameDim.isEmpty())
         {
             args << "--frame-dim";
             args << frameDim;
 
             int fri = ui->cbFrameColors->currentIndex();
-            QString frcolor = s_frame_colors[fri][1];
+            auto frcolor = s_frame_colors[fri][1];
             args << "--frame-color";
             args << frcolor;
         }
 
         if (ui->groupUnsharpMask->isChecked())
         {
-            QString UsmRadius= ui->leUsmRadius->text().trimmed();
+            auto UsmRadius= ui->leUsmRadius->text().trimmed();
             if (UsmRadius.length() > 0)
             {
                 args << "--unsharp-radius";
                 args << UsmRadius;
             }
-            QString UsmSigma= ui->leUsmSigma->text().trimmed();
+            auto UsmSigma= ui->leUsmSigma->text().trimmed();
             if (UsmSigma.length() > 0)
             {
                 args << "--unsharp-sigma";
                 args << UsmSigma;
             }
-            QString UsmAmount = ui->leUsmAmount->text().trimmed();
+            auto UsmAmount = ui->leUsmAmount->text().trimmed();
             if (UsmAmount.length() > 0)
             {
                 args << "--unsharp-amount";
                 args << UsmAmount;
             }
-            QString UsmThreshold = ui->leUsmThreshold->text().trimmed();
+            auto UsmThreshold = ui->leUsmThreshold->text().trimmed();
             if (UsmThreshold.length() > 0)
             {
                 args << "--unsharp-threshold";
@@ -415,13 +415,13 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
 
         if (ui->grpColorManagement->isChecked())
         {
-            QString input_profile = ui->leInputProfile->text().trimmed();
+            auto input_profile = ui->leInputProfile->text().trimmed();
             if (input_profile.length() > 0)
             {
                 args << "--input-profile";
                 args << input_profile;
             }
-            QString profile = ui->leProfile->text().trimmed();
+            auto profile = ui->leProfile->text().trimmed();
             if (profile.length() > 0)
             {
                 args << "--profile";
@@ -450,7 +450,7 @@ void MainWindow::on_bnOK_pressed__(bool isDryRun)
     }
 
     unsigned int lastTime_t = QDateTime::currentDateTime().toTime_t();
-    QString const title = this->windowTitle();
+    auto const title = this->windowTitle();
     this->setWindowTitle("["+ title + "]");
     this->setDisabled(true);
     ProcessOutputDlg outputDlg(this);
@@ -469,7 +469,7 @@ void MainWindow::on_cbDimPresets_currentIndexChanged(int index)
     m_changingPreset = true;
     if (index > -1)
     {
-        DimPreset const & preset = s_presets[index];
+        auto const & preset = s_presets[index];
         ui->leHeight->setText(preset[1]);
         ui->leWidth->setText(preset[2]);
         ui->cbUnits->setCurrentIndex(1);
@@ -492,14 +492,14 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton* /* button */)
 
 void MainWindow::on_lePPI_textEdited(QString str)
 {
-    QString input = str.trimmed();
+    auto input = str.trimmed();
     m_userPpi = input;
 }
 
 
 void MainWindow::on_lePPI_textChanged(QString str)
 {
-    QString input = str.trimmed();
+    auto input = str.trimmed();
 
     if (str.length() > 0)
     {
@@ -528,10 +528,10 @@ namespace
     template <typename WindowT, typename TextWidgetT>
     void getOpenProfile(WindowT * parent, TextWidgetT * text_widget, QString const & prompt)
     {
-        SplitComponents const splitter = splitPath(text_widget->text());
-        QString const & input_path = splitter.get<0>();
+        SplitComponents const splitter = splitPath(text_widget->text()); // auto doesn't work here!?
+        auto const & input_path = splitter.get<0>();
 
-        QString filename = QFileDialog::getOpenFileName(parent, prompt, input_path,
+        auto filename = QFileDialog::getOpenFileName(parent, prompt, input_path,
             "ICC profiles (*.ic?);; All Files (*.*)"
             );
         if (!filename.isEmpty())
@@ -583,7 +583,7 @@ namespace
             msgBox.exec();
             return;
         }
-        QStringList entries = dir.entryList(QStringList(), QDir::AllEntries | QDir::NoDotAndDotDot);
+        auto entries = dir.entryList(QStringList(), QDir::AllEntries | QDir::NoDotAndDotDot);
         if (entries.length() == 0)
         {
             return;
@@ -614,7 +614,7 @@ namespace
 
 void MainWindow::on_bnClearOutput_clicked()
 {
-    QString const & path = ui->lnOutputDir->text().trimmed();
+    auto const & path = ui->lnOutputDir->text().trimmed();
     clearDirectory(path);
 }
 

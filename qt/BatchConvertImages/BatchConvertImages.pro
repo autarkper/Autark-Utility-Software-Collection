@@ -12,3 +12,4 @@ FORMS += mainwindow.ui \
     processoutputdlg.ui
 LIBS += -lboost_filesystem \
     -lboost_regex
+QMAKE_CXXFLAGS += -std=c++11
