@@ -3,6 +3,7 @@
 require 'getoptlong'
 require 'bigdecimal'
 
+INTEREST = "Ränta"
 SALE = "Sälj"
 BUY = "Köp"
 DIVIDEND = "Utd"
@@ -57,6 +58,7 @@ $sold = BigDecimal.new(0)
 $dividends = BigDecimal.new(0)
 $prelskatt = BigDecimal.new(0)
 $other = BigDecimal.new(0)
+$interest = BigDecimal.new(0)
 $pnl0 = BigDecimal.new(0)
 $kassa = BigDecimal.new(0)
 
@@ -143,6 +145,12 @@ $rows.reverse.each {
         $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw, 0)
     end
 
+    if (type == "Räntor")
+        $kassa += value
+        $interest += value
+        $Transactions << $Transaction.new(INTEREST, papern, cols[0], amount, price, 0, 0, value, 0)
+    end
+
     if (buy)
         if (!liquidate)
             $bought += value
@@ -197,7 +205,7 @@ netbought = $bought - $sold
 $value = netbought + $pnl0
 $pnl = BigDecimal.new(0)
 $sumvalue = BigDecimal.new(0)
-$vikt = BigDecimal.new(0)
+$vikt = BigDecimal.new(100)
 holdings = []
 soldoff = []
 
@@ -229,10 +237,10 @@ puts
 holdings.each {|entry| puts entry}
 puts
 
-puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits - $withdrawn).to_f}"
+puts "Insättningar: #{$deposits.to_f}#{$___}Uttag: #{$withdrawn.to_f}#{$___}netto: #{(netdep = $deposits + $withdrawn).to_f}"
 puts "Köpt: #{rounda($bought, 100)}#{$___}Sålt: #{rounda($sold, 100)}#{$___}netto: #{rounda($bought - $sold, 100)}"
 puts "Utdelningar: #{$dividends.to_f}#{$___}Prelskatt: #{$prelskatt.to_f}"
-puts "Övrigt: #{$other.to_f}"
+puts "Övrigt: #{$other.to_f}#{$___}Ränta: #{$interest.to_f}"
 if (round($vikt) != round(100))
     p ["vikt", $vikt.to_f, 100.0].inspect
 end
@@ -243,7 +251,7 @@ if (round($value) != round($sumvalue))
     p ["value", $value.to_f, $sumvalue.to_f].inspect
 end
 
-cash = netdep - netbought + $dividends + $prelskatt + $other
+cash = netdep - netbought + $dividends + $prelskatt + $other + $interest
 if (cash != $kassa)
     p ["kassa", cash.to_f, $kassa.to_f].inspect
 end
