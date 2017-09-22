@@ -259,6 +259,9 @@ end
 $pnlpercent = $deposits != 0 ? $pnl / $deposits * 100 : 0
 $invpercent = netdep != 0 ? $sumvalue / netdep * 100 : 0
 $cashpercent = $sumvalue != 0 ? $kassa / $sumvalue * 100 : 0
+$totalTotal = $kassa + $sumvalue
+$totalpercent = $totalTotal != 0 ? $totalTotal / netdep * 100 : 0
 puts
 puts "Totalt investerat: #{rounda($sumvalue, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
 puts "Kassa: #{rounda($kassa, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
+puts "Total behållning: #{rounda($totalTotal, 100)} (#{rounda($totalpercent, 10)}% av nettoinsättningar)"
