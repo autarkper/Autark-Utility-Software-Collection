@@ -68,10 +68,12 @@ $papers = {}
 $Transaction = Struct.new("Transaction", :type, :paper, :date, :amount, :price, :acqp, :pnl, :value, :diff)
 $Transactions = []
 
+# Datum (0);Konto (1);Typ av transaktion (2);Värdepapper/beskrivning (3);Antal (4);Kurs (5);Belopp (6);Courtage (7);Valuta (8);ISIN (9)
+
 $rows.reverse.each {
     |cols|
-    next if (cols[0] == "Datum")
-    #p cols
+    next if (cols[0].match(/Datum/)) # line may begin with some garbage character
+    # p cols
 
     value_raw = BigDecimal.new(cols[6].sub(",", "."))
     value = value_raw.abs
