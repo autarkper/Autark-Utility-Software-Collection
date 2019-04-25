@@ -85,31 +85,27 @@ $rows.reverse.each {
     diff = (price * amount_raw) + value_raw
 
     liquidate = false
-    $account = cols[1]
-    if (type =~ /Ins.ttning/)
-        $deposits += value
-        $kassa += value
-        $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value, diff)
-    end
-    if (type =~ /Uttag/)
-        $withdrawn -= value
-        $kassa -= value
-        $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value, diff)
-    end
     buy = false
     sell = false
-    if (type =~ /, r.ttelse/)
-        value = -value
-        amount = -amount
-    end
-
     if (type =~ /K.p/)
         buy = true
     elsif (type =~ /S.lj/)
         sell = true
     end
 
-    if (type =~ /Byte till/)
+    $account = cols[1]
+    if (type =~ /Ins.ttning/)
+        $deposits += value
+        $kassa += value
+        $Transactions << $Transaction.new(DEPOSIT, nil, cols[0], 0, 0, 0, 0, value, diff)
+    elsif (type =~ /Uttag/)
+        $withdrawn -= value
+        $kassa -= value
+        $Transactions << $Transaction.new(WITHDRAWAL, nil, cols[0], 0, 0, 0, 0, value, diff)
+    elsif (type =~ /, r.ttelse/)
+        value = -value
+        amount = -amount
+    elsif (type =~ /Byte till/)
         liquidate = true
         sell = true
         paper = $papers[papern]
@@ -118,13 +114,12 @@ $rows.reverse.each {
     elsif (type =~ /Byte från/)
         liquidate = true
         buy = true
-    end
-
-    if (type == "Prelskatt utdelningar")
+    elsif (type == "Prelskatt utdelningar")
         $prelskatt += value
         $kassa -= value
         next
     end
+
     if (buy || sell || amount != 0)
         value = value != 0 ? value : (amount * price).abs
         paper = $papers[papern] || $papers[papern] = $Paper.new(0, 0, 0, 0, 0)
@@ -135,9 +130,7 @@ $rows.reverse.each {
         $dividends += value
         $kassa += value
         $Transactions << $Transaction.new(DIVIDEND, papern, cols[0], amount, price, 0, 0, value, 0)
-    end
-
-    if (type =~ /.vrigt/)
+    elsif (type =~ /.vrigt/)
         if (papern == "Avkastningsskatt")
             $prelskatt += value_raw
         else
@@ -145,9 +138,7 @@ $rows.reverse.each {
         end
         $kassa -= value
         $Transactions << $Transaction.new(OTHER, papern, cols[0], 0, 0, 0, 0, value_raw, 0)
-    end
-
-    if (type == "Räntor")
+    elsif (type == "Räntor")
         $kassa += value
         $interest += value
         $Transactions << $Transaction.new(INTEREST, papern, cols[0], amount, price, 0, 0, value, 0)
@@ -221,7 +212,7 @@ $papers.sort{|a, b|
     end
     }.each {
     |name, paper|
-    $pnl = $pnl + paper.pnl
+    $pnl += paper.pnl
     pnl = (paper.pnl == 0) ? "" : "#{$___}PnL: #{round(paper.pnl)}"
     divpercent = paper.amount == 0 ? "" : " (#{round(paper.dividends/paper.value * 100.0)}%)"
     dividends = (paper.dividends == 0) ? "" : "#{$___}Utdelningar: #{round(paper.dividends)}" + divpercent
