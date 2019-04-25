@@ -162,6 +162,11 @@ $rows.reverse.each {
         acqp = paper.amount == 0 ? 0 : paper.value/paper.amount
         acqv = acqp * amount
         paper.amount -= amount
+        if (paper.amount < 0) then
+            # should not happen, but it does
+            paper.amount = 0
+            paper.value = 0
+        end
         pnl = 0
         if (!liquidate)
             paper.value -= acqv
@@ -255,6 +260,6 @@ $cashpercent = $sumvalue != 0 ? $kassa / $sumvalue * 100 : 0
 $totalTotal = $kassa + $sumvalue
 $totalpercent = $totalTotal != 0 ? $totalTotal / netdep * 100 : 0
 puts
-puts "Totalt investerat: #{rounda($sumvalue, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
+puts "Summa innehav: #{rounda($sumvalue, 100)} (#{rounda($invpercent, 10)}% av nettoinsättningar), Totalt realiserat resultat: #{rounda($pnl, 100)} (#{rounda($pnlpercent, 10)}% av insättningar)"
 puts "Kassa: #{rounda($kassa, 100)} (#{rounda($cashpercent, 10)}% av investerat)"
 puts "Total behållning: #{rounda($totalTotal, 100)} (#{rounda($totalpercent, 10)}% av nettoinsättningar)"
