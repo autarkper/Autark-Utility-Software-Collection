@@ -149,7 +149,7 @@ $rows.reverse.each {
             $bought += value
             $kassa -= value
         end
-        paper.amount = paper.amount + amount
+        paper.amount += amount
         paper.value += value
         paper.highest = [paper.highest, price].max
         acqp = paper.value/paper.amount
