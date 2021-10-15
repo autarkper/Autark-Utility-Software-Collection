@@ -94,7 +94,7 @@ class Relocator
             link = File.join(path, link)
         end
         absolute_link = File.expand_path(link)
-        if (not File.exists?(absolute_link))
+        if (not File.exist?(absolute_link))
             STDERR.puts("#{$my_name}: '#{absolute_link}' (alias '#{linky}') does not exist")
             if (not $allow_bad_link)
                 $dont_do_it = true
@@ -192,7 +192,7 @@ end
 ARGV.each {
     |source|
     
-    if (!FileTest.exists?(source))
+    if (!FileTest.exist?(source))
         fail "source-directory '#{source}' does not exist"
     end
 

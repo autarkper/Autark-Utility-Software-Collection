@@ -54,7 +54,7 @@ end
 ARGV.each {
     |file|
 
-    if (!File.exists?(file))
+    if (!File.exist?(file))
         STDERR.puts "#{$myprog}: file '#{file}' does not exist"
         $failures += 1
         next

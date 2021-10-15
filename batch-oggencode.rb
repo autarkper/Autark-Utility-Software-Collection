@@ -247,11 +247,11 @@ def make_dirs(sourcen, reldir = nil)
         relative = AutarkFileUtils::make_relative($out_dir,source_dir)
         target_dir = relative[0..0] == '/' ? relative : File.join($out_dir, relative)
 
-        if (!FileTest.exists?(target_dir))
+        if (!FileTest.exist?(target_dir))
             $sc_silent.safeExec("mkdir", ['-p', target_dir])
         end
 
-        file_exists = FileTest.exists?(target_dir)
+        file_exists = FileTest.exist?(target_dir)
         if (not file_exists and not $dry_run)
             fail "target-directory '#{target_dir}' does not exist"
         end
@@ -304,7 +304,7 @@ def process__(job, source, *args)
     target = File.join(target_dir, $utility != nil ? File.basename(safesource) : base + ($lame ? ".mp3" : ($toflac ? ".flac" : ".ogg")))
     target = File.expand_path(target)
 
-    exists = FileTest.exists?(target)
+    exists = FileTest.exist?(target)
     instat = File.stat(source)
     outstat = exists ? File.stat(target) : nil
     overwrite = $overwrite
@@ -433,7 +433,7 @@ def process(source, *args)
 end
 
 def process_filename(f, *args)
-    bExists = FileTest.exists?(f)
+    bExists = FileTest.exist?(f)
     if (bExists)
         staten = File.stat(f)
         return if (staten.directory?)

@@ -98,7 +98,7 @@ if (!$out_dir.nil?)
         abort "#{$myprog}: options --out-dir and --replace conflict\n"
     end
     
-    if (!File.exists?($out_dir))
+    if (!File.exist?($out_dir))
         $sysc.safeExec('mkdir', ['-p', $out_dir])
     end
 
@@ -121,7 +121,7 @@ $failures = 0
 for_each_file = proc {
     |file|
     
-    if (!File.exists?(file))
+    if (!File.exist?(file))
         STDERR.puts "#{$myprog}: file '#{file}' does not exist"
         exit(1)
     end
@@ -142,14 +142,14 @@ for_each_file = proc {
         reldir = File.split(AutarkFileUtils.make_relative(File.expand_path(file), File.expand_path('.')))[0]
         reldir.sub!(%r|^\.+/+|, '') # strip relative component from path
         newdir = File.join($out_dir, reldir)
-        if (!File.exists?(newdir))
+        if (!File.exist?(newdir))
             $sysc.safeExec('mkdir', ['-p', newdir])
         end
         File.join(newdir, File.basename(file))
     end
 
     
-    if (File.exists?(outfile) && !$overwrite)
+    if (File.exist?(outfile) && !$overwrite)
         puts "#{$myprog}: cannot overwrite existing output file '#{outfile}'"
         exit(1)
     end

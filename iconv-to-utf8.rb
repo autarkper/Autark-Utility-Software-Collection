@@ -43,7 +43,7 @@ end
 
 ARGV.each {
     |f|
-    bExists = FileTest.exists?(f)
+    bExists = FileTest.exist?(f)
     if (bExists)
         staten = File.stat(f)
         next if (staten.directory?)

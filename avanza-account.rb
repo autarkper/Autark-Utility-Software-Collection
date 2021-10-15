@@ -28,7 +28,7 @@ if ($file == nil)
     exit(1)
 end
 
-if (!File.exists?($file))
+if (!File.exist?($file))
     print "file does not exist\n"
     exit(1)
 end

@@ -271,11 +271,11 @@ def join_dirs(sourcen, reldir)
             File.join($out_dir, source_dir)
         end
 
-        if (!FileTest.exists?(target_dir))
+        if (!FileTest.exist?(target_dir))
             puts_command("mkdir", ['-p', target_dir])
         end
 
-        file_exists = FileTest.exists?(target_dir)
+        file_exists = FileTest.exist?(target_dir)
         if (not file_exists and not $dry_run)
             fail "target-directory '#{target_dir}' does not exist"
         end
@@ -380,7 +380,7 @@ def process__(source, reldir = nil)
         return false
     end
 
-    bExists = FileTest.exists?(target)
+    bExists = FileTest.exist?(target)
     
     if ($update and !bExists)
         if ($verbose)
@@ -503,7 +503,7 @@ end
 $found_count = 0
 
 def process_filename(f, reldir = nil)
-    bExists = FileTest.exists?(f)
+    bExists = FileTest.exist?(f)
     if (bExists)
         staten = File.stat(f)
         return if (staten.directory?)

@@ -215,7 +215,7 @@ end
 reldir = dir[1, dir.length]
 target_base = File.expand_path(File.join($target, '.versions', reldir.split('/').join('|')))
 if ($dobackup)
-    if (!FileTest.exists?(target_base))
+    if (!FileTest.exist?(target_base))
         if ($init)
             sc = SystemCommand.new
             user = Etc.getpwuid(Process.uid).name
@@ -250,7 +250,7 @@ $backup_dir = File.join(target_base, backup_suffix)
 $logfile = File.expand_path(File.join($target, '.' + dir.split('/').join('|'))) + "-log" + backup_suffix
 $hardtarget = File.expand_path(File.join($target, reldir, ".."))
 
-if (!FileTest.exists?($hardtarget))
+if (!FileTest.exist?($hardtarget))
     if ($init)
         sc = SystemCommand.new
         sc.safeExec("sudo", ['-k', 'install', '-d', '-o', ENV["USER"], $hardtarget])

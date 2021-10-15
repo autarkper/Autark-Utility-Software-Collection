@@ -69,7 +69,7 @@ end
 
 $source_dir.each {
     |dir|
-	if (!FileTest.exists?(dir))
+	if (!FileTest.exist?(dir))
 	    fail "source-directory '#{dir}' does not exist"
 	end
 
@@ -171,7 +171,7 @@ def exif_file(fulltarget)
             puts_command("dcraw", ['-e', raw_alias]) # will produce a .thumb.jpg file in tempdir
 
             fthumb = File.join(tmpdir, 'raw.thumb.jpg')
-            if (FileTest.exists?(fthumb))
+            if (FileTest.exist?(fthumb))
                 do_touch(f, fthumb)
                 file_info = [fthumb, true]
             end
@@ -220,7 +220,7 @@ def process(target)
         if (drift_args == nil)
             drift_file = File::join(source_dir, 'drift.txt')
             drift_args = []
-            if (File.exists?(drift_file))
+            if (File.exist?(drift_file))
                 File.open(drift_file) {
                     |fh|
                     fh.lines.each {
@@ -284,7 +284,7 @@ trap("INT") { cleanup() }
 
 ARGV.each {
     |f|
-    bExists = FileTest.exists?(f) && File.stat(f).size > 0
+    bExists = FileTest.exist?(f) && File.stat(f).size > 0
     if (bExists)
         process( f )
     else
