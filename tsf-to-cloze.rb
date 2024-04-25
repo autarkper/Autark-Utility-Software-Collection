@@ -43,7 +43,7 @@ $too_short = 0
 
 $stdin.each {
     |line|
-    id0, orig, id2, trans = line.chomp.split(/\t/) {}
+    id0, orig, id2, trans = line.chomp.split(/\t/)
     length = orig.count(" ") + 1;
     if ($wordsmax > 0 && length > $wordsmax)
         $stderr.puts("discarding (too long (#{length})): #{orig}") if $verbose
