@@ -1,15 +1,27 @@
-# -------------------------------------------------
-# Project created by QtCreator 2009-12-03T16:06:00
-# -------------------------------------------------
-TARGET = BatchConvertImages
-TEMPLATE = app
-SOURCES += main.cpp \
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+CONFIG += c++17
+
+# You can make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+SOURCES += \
+    main.cpp \
     mainwindow.cpp \
     processoutputdlg.cpp
-HEADERS += mainwindow.h \
+
+HEADERS += \
+    mainwindow.h \
     processoutputdlg.h
-FORMS += mainwindow.ui \
+
+FORMS += \
+    mainwindow.ui \
     processoutputdlg.ui
-LIBS += -lboost_filesystem \
-    -lboost_regex
-QMAKE_CXXFLAGS += -std=c++11
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
