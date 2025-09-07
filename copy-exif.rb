@@ -5,6 +5,10 @@ require 'getoptlong'
 require_relative "SystemCommand"
 require_relative "ExifToolUtils"
 
+=begin
+    sudo apt install exiftool
+=end
+
 options = [
     ["--help", "-h", GetoptLong::NO_ARGUMENT ],
     ["--source-dir", GetoptLong::REQUIRED_ARGUMENT ],

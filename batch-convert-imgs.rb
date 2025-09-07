@@ -4,6 +4,11 @@ require_relative "SystemCommand"
 require_relative "AutarkFileUtils"
 require_relative "ExifToolUtils"
 
+=begin
+sudo apt install imagemagick-6.q16
+sudo apt install exiftool
+=end
+
 require 'getoptlong'
 require 'thread'
 
